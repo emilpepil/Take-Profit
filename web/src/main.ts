@@ -20,6 +20,7 @@ const erc20 = [
 ] as const;
 const status = document.querySelector<HTMLParagraphElement>("#status")!;
 const set = (value: string) => { status.textContent = value; };
+const display = (amount: bigint, decimals: number) => Number(formatUnits(amount, decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 });
 
 document.querySelector<HTMLDivElement>("#swaps")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol}/USDm</h2><label>Direction <select id="${pair.symbol}-direction"><option value="buy">Buy ${pair.symbol} with USDm (price up)</option><option value="sell">Sell ${pair.symbol} for USDm (price down)</option></select></label><label>Amount in <input id="${pair.symbol}-amount" value="10000" inputmode="decimal"/></label><p id="${pair.symbol}-quote">Enter an amount to calculate the quote.</p><button id="${pair.symbol}-swap" disabled>Swap</button></section>`).join("");
 
@@ -45,7 +46,7 @@ async function quote(pair: typeof pairs[number]) {
     if (data.amountIn <= 0n) throw new Error("Amount must be greater than zero.");
     const output = await client.readContract({ address: pair.pool, abi: poolArtifact.abi, functionName: "getAmountOut", args: [data.tokenIn, data.amountIn] }) as bigint;
     const minimum = output * 9900n / 10000n;
-    quoteBox.textContent = `Expected: ${formatUnits(output, data.decimalsOut)} ${data.symbolOut}. Minimum received: ${formatUnits(minimum, data.decimalsOut)} ${data.symbolOut}.`;
+    quoteBox.textContent = `Expected: ${display(output, data.decimalsOut)} ${data.symbolOut}. Minimum received: ${display(minimum, data.decimalsOut)} ${data.symbolOut}.`;
   } catch (error) { quoteBox.textContent = error instanceof Error ? error.shortMessage ?? error.message : "Quote unavailable."; }
 }
 
@@ -77,7 +78,7 @@ for (const pair of pairs) {
       const connectedWallet = wallet();
       const allowance = await client.readContract({ address: data.tokenIn, abi: erc20, functionName: "allowance", args: [account!, pair.pool] });
       if (allowance < data.amountIn) {
-        set(`Approve exactly ${formatUnits(data.amountIn, data.direction === "buy" ? 6 : 18)} ${data.symbolIn} in MetaMask...`);
+        set(`Approve exactly ${display(data.amountIn, data.direction === "buy" ? 6 : 18)} ${data.symbolIn} in MetaMask...`);
         const approval = { account: account!, address: data.tokenIn, abi: erc20, functionName: "approve" as const, args: [pair.pool, data.amountIn] };
         const approvalGas = await client.estimateContractGas(approval);
         await wait(await connectedWallet.writeContract({ ...approval, gas: approvalGas + approvalGas / 10n }));
