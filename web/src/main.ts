@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, custom, defineChain, formatUnits, getAddress, http, parseUnits, type Address } from "viem";
+import { createPublicClient, createWalletClient, custom, defineChain, encodeDeployData, formatUnits, getAddress, http, parseUnits, type Address } from "viem";
 import poolArtifact from "./generated/SimplePool.json";
 import vaultArtifact from "./generated/PolicyVault.json";
 import "./style.css";
@@ -104,7 +104,8 @@ for (const pair of pairs) {
       const connectedWallet = wallet();
       const deployment = { account: account!, abi: vaultArtifact.abi, bytecode: vaultArtifact.bytecode as `0x${string}`, args: [pair.token, usdm, pair.pool, account!, account!, takeProfit, rebalance, Number(tradeBps), Number(slippageBps)] };
       set(`MetaMask will deploy ${pair.symbol} PolicyVault. Review the parameters and gas limit.`);
-      const gas = await client.estimateContractGas(deployment);
+      const deploymentData = encodeDeployData({ abi: deployment.abi, bytecode: deployment.bytecode, args: deployment.args });
+      const gas = await client.estimateGas({ account: account!, data: deploymentData });
       const hash = await connectedWallet.deployContract({ ...deployment, gas: gas + gas / 10n });
       set(`${pair.symbol} PolicyVault sent: ${hash}. Waiting for confirmation...`);
       const receipt = await client.waitForTransactionReceipt({ hash });
