@@ -3,7 +3,8 @@ artifacts/
 cache/
 coverage/
 typechain-types/
+web/dist/
+web/src/generated/
 .env
 .env.local
 *.log
-

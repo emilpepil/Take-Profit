@@ -36,6 +36,18 @@
       "sourceType": "github",
       "skillPath": "tooling-and-infra/SKILL.md",
       "computedHash": "6bc6b2106e6bea70b1a32f3d34a11bce46038e8bbc55e8e68d7a4c4698e7e79a"
+    },
+    "wallet": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "wallet/SKILL.md",
+      "computedHash": "7dcb8eed1250a6077e6bf61a525809ef954199f11dc64a3ef5dffb10f18ddb35"
+    },
+    "wallet-integration": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "wallet-integration/SKILL.md",
+      "computedHash": "de257b6c2655626b270b77e634cdd793209dad868c85023b7f524b857916fa1e"
     }
   }
 }
