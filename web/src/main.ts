@@ -11,9 +11,9 @@ const client = createPublicClient({ chain, transport: http(rpc) });
 let account: Address | undefined;
 const usdm = getAddress("0x0f1471d41e25e7880a3c3021dfcb5efb29079f71");
 const pairs = [
-  { symbol: "JAMES", token: getAddress("0x8f32e211244706c9b0902a9bd823e1c768a032c2"), pool: getAddress("0x6ba5e36975ce93778543a512f2c99679daadaf04") },
-  { symbol: "EMO", token: getAddress("0x3d07c291cc9a7eaa11fa2f2bd2894643c0923e6c"), pool: getAddress("0x127428881a30bc257b9a0b2bd57ab11a3bbad0e7") },
-  { symbol: "CHOG", token: getAddress("0x6bf60cc379ad2c76ebf4c1d4f0ef528427483313"), pool: getAddress("0xf5d0a5d5458a095f4a7065e999837dfe34ef2e92") },
+  { symbol: "JAMES", token: getAddress("0x8f32e211244706c9b0902a9bd823e1c768a032c2"), pool: getAddress("0x6ba5e36975ce93778543a512f2c99679daadaf04"), vault: getAddress("0x88760064022811c60771fd5fb574895361189a2d") },
+  { symbol: "EMO", token: getAddress("0x3d07c291cc9a7eaa11fa2f2bd2894643c0923e6c"), pool: getAddress("0x127428881a30bc257b9a0b2bd57ab11a3bbad0e7"), vault: getAddress("0x59f70bfabce71c8463ee97295e5af60ae4d05492") },
+  { symbol: "CHOG", token: getAddress("0x6bf60cc379ad2c76ebf4c1d4f0ef528427483313"), pool: getAddress("0xf5d0a5d5458a095f4a7065e999837dfe34ef2e92"), vault: getAddress("0xe7f348cf2cfb94428784e6480f046df86fe826f1") },
 ];
 const erc20 = [
   { type: "function", name: "approve", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] },
@@ -25,12 +25,22 @@ const display = (amount: bigint, decimals: number) => Number(formatUnits(amount,
 
 document.querySelector<HTMLDivElement>("#swaps")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol}/USDm</h2><label>Direction <select id="${pair.symbol}-direction"><option value="buy">Buy ${pair.symbol} with USDm (price up)</option><option value="sell">Sell ${pair.symbol} for USDm (price down)</option></select></label><label>Amount in <input id="${pair.symbol}-amount" value="10000" inputmode="decimal"/></label><p id="${pair.symbol}-quote">Enter an amount to calculate the quote.</p><button id="${pair.symbol}-swap" disabled>Swap</button></section>`).join("");
 document.querySelector<HTMLDivElement>("#vaults")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} PolicyVault</h2><label>Take-profit price (USDm) <input id="${pair.symbol}-take" value="14" inputmode="decimal"/></label><label>Rebalance price (USDm) <input id="${pair.symbol}-rebalance" value="10" inputmode="decimal"/></label><label>Trade share (%) <input id="${pair.symbol}-share" value="25" inputmode="numeric"/></label><label>Max slippage (%) <input id="${pair.symbol}-slippage" value="1" inputmode="decimal"/></label><button id="${pair.symbol}-deploy" disabled>Deploy ${pair.symbol} PolicyVault</button></section>`).join("");
+document.querySelector<HTMLDivElement>("#funding")!.innerHTML = pairs.map((pair) => `<section><h2>Fund ${pair.symbol} vault</h2><label>${pair.symbol} <input id="${pair.symbol}-fund-asset" value="1000" inputmode="decimal"/></label><label>USDm <input id="${pair.symbol}-fund-usdm" value="10000" inputmode="decimal"/></label><button id="${pair.symbol}-fund" disabled>Approve and fund vault</button></section>`).join("");
 
 function wallet() {
   if (!window.ethereum || !account) throw new Error("Connect MetaMask first.");
   return createWalletClient({ account, chain, transport: custom(window.ethereum) });
 }
 async function wait(hash: `0x${string}`) { await client.waitForTransactionReceipt({ hash }); }
+async function approveIfNeeded(token: Address, spender: Address, amount: bigint, symbol: string) {
+  const allowance = await client.readContract({ address: token, abi: erc20, functionName: "allowance", args: [account!, spender] });
+  if (allowance >= amount) return;
+  const connectedWallet = wallet();
+  set(`Approve exactly ${symbol} in MetaMask...`);
+  const approval = { account: account!, address: token, abi: erc20, functionName: "approve" as const, args: [spender, amount] };
+  const gas = await client.estimateContractGas(approval);
+  await wait(await connectedWallet.writeContract({ ...approval, gas: gas + gas / 10n }));
+}
 function inputs(pair: typeof pairs[number]) {
   const direction = document.querySelector<HTMLSelectElement>(`#${pair.symbol}-direction`)!.value as "buy" | "sell";
   const raw = document.querySelector<HTMLInputElement>(`#${pair.symbol}-amount`)!.value;
@@ -63,7 +73,7 @@ document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
       }
     }
     account = getAddress((await window.ethereum.request({ method: "eth_requestAccounts" }) as string[])[0]);
-    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; await quote(pair); }
+    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; await quote(pair); }
     set("Connected. You can swap or configure a PolicyVault.");
   } catch (error) { set(error instanceof Error ? error.message : "Connection failed."); }
 };
@@ -110,6 +120,22 @@ for (const pair of pairs) {
       set(`${pair.symbol} PolicyVault sent: ${hash}. Waiting for confirmation...`);
       const receipt = await client.waitForTransactionReceipt({ hash });
       set(`${pair.symbol} PolicyVault deployed at ${receipt.contractAddress}. Send this transaction link to verify it.`);
+    } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
+  };
+
+  document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.onclick = async () => {
+    try {
+      const assetAmount = parseUnits(document.querySelector<HTMLInputElement>(`#${pair.symbol}-fund-asset`)!.value, 18);
+      const stableAmount = parseUnits(document.querySelector<HTMLInputElement>(`#${pair.symbol}-fund-usdm`)!.value, 6);
+      if (assetAmount <= 0n && stableAmount <= 0n) throw new Error("Enter a positive token or USDm amount.");
+      if (assetAmount > 0n) await approveIfNeeded(pair.token, pair.vault, assetAmount, `${display(assetAmount, 18)} ${pair.symbol}`);
+      if (stableAmount > 0n) await approveIfNeeded(usdm, pair.vault, stableAmount, `${display(stableAmount, 6)} USDm`);
+      set(`Fund ${pair.symbol} PolicyVault in MetaMask...`);
+      const connectedWallet = wallet();
+      const funding = { account: account!, address: pair.vault, abi: vaultArtifact.abi, functionName: "fund" as const, args: [assetAmount, stableAmount] };
+      const gas = await client.estimateContractGas(funding);
+      await wait(await connectedWallet.writeContract({ ...funding, gas: gas + gas / 10n }));
+      set(`${pair.symbol} PolicyVault funded. Send the funding transaction link to verify balances.`);
     } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
   };
 }
