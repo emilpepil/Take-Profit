@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "addresses": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "addresses/SKILL.md",
+      "computedHash": "519af4a9f1a3ca7975bfa4058deb4b749d9eb2caddec2142db61317412292a0c"
+    },
+    "concepts": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "concepts/SKILL.md",
+      "computedHash": "e0f3ec33522d84aa8dff0dc62e9d3b806a24505a1bb0148264866e3f29572cc3"
+    },
+    "gas": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "gas/SKILL.md",
+      "computedHash": "d5e029b79efd4e4ea8e81fcbd1ba365302c4b8d9a8d728ac031da8909ab6882a"
+    },
+    "monskill": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "86e4bfac83409f9ec29dbfd4beafa49717bdfe50b836bc997c1891ad197fac2b"
+    },
+    "scaffold": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "scaffold/SKILL.md",
+      "computedHash": "3dcd58d1fd32c270ba59a677f6f4787ca83e9ee62318e49db7dc89eddc43872a"
+    },
+    "tooling-and-infra": {
+      "source": "therealharpaljadeja/monskills",
+      "sourceType": "github",
+      "skillPath": "tooling-and-infra/SKILL.md",
+      "computedHash": "6bc6b2106e6bea70b1a32f3d34a11bce46038e8bbc55e8e68d7a4c4698e7e79a"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "take-profit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Automated profit-taking and portfolio rebalancing agent for Monad Testnet.",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "clean": "hardhat clean"
+  },
+  "devDependencies": {
+    "hardhat": "^3.9.1",
+    "typescript": "^5.9.3"
+  }
+}
