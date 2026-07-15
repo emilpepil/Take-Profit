@@ -5,3 +5,7 @@ await cp(
   "artifacts/contracts/SimplePool.sol/SimplePool.json",
   "web/src/generated/SimplePool.json"
 );
+await cp(
+  "artifacts/contracts/DemoMarketFactory.sol/DemoMarketFactory.json",
+  "web/src/generated/DemoMarketFactory.json"
+);

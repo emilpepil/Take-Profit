@@ -10,9 +10,17 @@ contract DemoMarketFactory {
     uint256 private constant ASSET_SUPPLY = 1_000_000 ether;
     uint256 private constant USDM_SUPPLY = 10_000_000 * 1e6;
 
+    DemoToken public immutable james;
+    DemoToken public immutable emo;
+    DemoToken public immutable chog;
+    DemoToken public immutable usdm;
+    SimplePool public immutable jamesPool;
+    SimplePool public immutable emoPool;
+    SimplePool public immutable chogPool;
+
     event DemoMarketDeployed(address indexed owner, address james, address emo, address chog, address usdm, address jamesPool, address emoPool, address chogPool);
 
-    function deployDemoMarket(address owner) external returns (DemoToken james, DemoToken emo, DemoToken chog, DemoToken usdm, SimplePool jamesPool, SimplePool emoPool, SimplePool chogPool) {
+    constructor(address owner) {
         require(owner != address(0), "owner is zero");
         james = new DemoToken("James", "JAMES", 18, owner, ASSET_SUPPLY);
         emo = new DemoToken("Emo", "EMO", 18, owner, ASSET_SUPPLY);
