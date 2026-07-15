@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, custom, defineChain, getAddress, http, type Address } from "viem";
+import { createPublicClient, createWalletClient, custom, defineChain, getAddress, http, parseEther, parseUnits, type Address } from "viem";
 import artifact from "./generated/SimplePool.json";
 import "./style.css";
 
@@ -8,9 +8,14 @@ const rpcUrl = "https://testnet-rpc.monad.xyz";
 const monadTestnet = defineChain({ id: 10143, name: "Monad Testnet", nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 }, rpcUrls: { default: { http: [rpcUrl] } }, blockExplorers: { default: { name: "Monad Explorer", url: "https://testnet.monadexplorer.com" } } });
 const WMON = getAddress("0xFb8bf4c1CC7a94c73D209a149eA2AbEa852BC541");
 const USDC = getAddress("0x534b2f3A21130d7a60830c2Df862319e593943A3");
+const POOL = getAddress("0xd1880a25c8ec7c7949d2a6c52a9b72848e2e4692");
+const erc20Abi = [{ type: "function", name: "approve", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] }] as const;
+const wmonAbi = [{ type: "function", name: "deposit", stateMutability: "payable", inputs: [], outputs: [] }] as const;
 const publicClient = createPublicClient({ chain: monadTestnet, transport: http(rpcUrl) });
 const connectButton = document.querySelector<HTMLButtonElement>("#connect")!;
 const deployButton = document.querySelector<HTMLButtonElement>("#deploy")!;
+const wrapButton = document.querySelector<HTMLButtonElement>("#wrap")!;
+const liquidityButton = document.querySelector<HTMLButtonElement>("#liquidity")!;
 const status = document.querySelector<HTMLParagraphElement>("#status")!;
 document.querySelector<HTMLDListElement>("#wmon")!.textContent = WMON;
 document.querySelector<HTMLDListElement>("#usdc")!.textContent = USDC;
@@ -35,9 +40,16 @@ connectButton.addEventListener("click", async () => {
     account = getAddress(accounts[0]);
     connectButton.textContent = `${account.slice(0, 6)}…${account.slice(-4)}`;
     deployButton.disabled = false;
+    wrapButton.disabled = false;
+    liquidityButton.disabled = false;
     setStatus("Wallet connected. Review the MetaMask transaction before confirming.");
   } catch (error) { setStatus(error instanceof Error ? error.message : "Could not connect MetaMask."); }
 });
+
+function wallet() { if (!window.ethereum || !account) throw new Error("Connect MetaMask first."); return createWalletClient({ account, chain: monadTestnet, transport: custom(window.ethereum) }); }
+async function wait(hash: `0x${string}`) { await publicClient.waitForTransactionReceipt({ hash }); }
+wrapButton.addEventListener("click", async () => { try { const value = parseEther((document.querySelector<HTMLInputElement>("#wrap-amount")!).value); setStatus("Confirm wrapping in MetaMask…"); await wait(await wallet().writeContract({ account, address: WMON, abi: wmonAbi, functionName: "deposit", value })); setStatus("WMON received. Request USDC from Circle Faucet, then add liquidity."); } catch (error) { setStatus(error instanceof Error ? error.message : "Wrapping failed or was cancelled."); } });
+liquidityButton.addEventListener("click", async () => { try { const wmonAmount = parseEther((document.querySelector<HTMLInputElement>("#wmon-amount")!).value); const usdcAmount = parseUnits((document.querySelector<HTMLInputElement>("#usdc-amount")!).value, 6); const client = wallet(); setStatus("1/3: confirm WMON approval in MetaMask…"); await wait(await client.writeContract({ account, address: WMON, abi: erc20Abi, functionName: "approve", args: [POOL, wmonAmount] })); setStatus("2/3: confirm USDC approval in MetaMask…"); await wait(await client.writeContract({ account, address: USDC, abi: erc20Abi, functionName: "approve", args: [POOL, usdcAmount] })); setStatus("3/3: confirm adding liquidity in MetaMask…"); await wait(await client.writeContract({ account, address: POOL, abi: artifact.abi, functionName: "addLiquidity", args: [wmonAmount, usdcAmount] })); setStatus("Liquidity added. Send the last transaction hash for verification."); } catch (error) { setStatus(error instanceof Error ? error.message : "Liquidity action failed or was cancelled."); } });
 
 deployButton.addEventListener("click", async () => {
   try {
