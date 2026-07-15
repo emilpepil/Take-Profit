@@ -1,5 +1,6 @@
-import { createPublicClient, createWalletClient, custom, defineChain, formatUnits, getAddress, http, parseEther, parseUnits, type Address } from "viem";
+import { createPublicClient, createWalletClient, custom, defineChain, formatUnits, getAddress, http, parseUnits, type Address } from "viem";
 import poolArtifact from "./generated/SimplePool.json";
+import vaultArtifact from "./generated/PolicyVault.json";
 import "./style.css";
 
 declare global { interface Window { ethereum?: { request(args: { method: string; params?: unknown[] }): Promise<unknown> } } }
@@ -23,6 +24,7 @@ const set = (value: string) => { status.textContent = value; };
 const display = (amount: bigint, decimals: number) => Number(formatUnits(amount, decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 });
 
 document.querySelector<HTMLDivElement>("#swaps")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol}/USDm</h2><label>Direction <select id="${pair.symbol}-direction"><option value="buy">Buy ${pair.symbol} with USDm (price up)</option><option value="sell">Sell ${pair.symbol} for USDm (price down)</option></select></label><label>Amount in <input id="${pair.symbol}-amount" value="10000" inputmode="decimal"/></label><p id="${pair.symbol}-quote">Enter an amount to calculate the quote.</p><button id="${pair.symbol}-swap" disabled>Swap</button></section>`).join("");
+document.querySelector<HTMLDivElement>("#vaults")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} PolicyVault</h2><label>Take-profit price (USDm) <input id="${pair.symbol}-take" value="14" inputmode="decimal"/></label><label>Rebalance price (USDm) <input id="${pair.symbol}-rebalance" value="10" inputmode="decimal"/></label><label>Trade share (%) <input id="${pair.symbol}-share" value="25" inputmode="numeric"/></label><label>Max slippage (%) <input id="${pair.symbol}-slippage" value="1" inputmode="decimal"/></label><button id="${pair.symbol}-deploy" disabled>Deploy ${pair.symbol} PolicyVault</button></section>`).join("");
 
 function wallet() {
   if (!window.ethereum || !account) throw new Error("Connect MetaMask first.");
@@ -61,8 +63,8 @@ document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
       }
     }
     account = getAddress((await window.ethereum.request({ method: "eth_requestAccounts" }) as string[])[0]);
-    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; await quote(pair); }
-    set("Connected. Choose a swap direction and amount.");
+    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; await quote(pair); }
+    set("Connected. You can swap or configure a PolicyVault.");
   } catch (error) { set(error instanceof Error ? error.message : "Connection failed."); }
 };
 
@@ -89,6 +91,24 @@ for (const pair of pairs) {
       await wait(await connectedWallet.writeContract({ ...swap, gas: swapGas + swapGas / 10n }));
       set(`${pair.symbol} price moved. Quote refreshed.`);
       await quote(pair);
+    } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
+  };
+
+  document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.onclick = async () => {
+    try {
+      const takeProfit = parseUnits(document.querySelector<HTMLInputElement>(`#${pair.symbol}-take`)!.value, 18);
+      const rebalance = parseUnits(document.querySelector<HTMLInputElement>(`#${pair.symbol}-rebalance`)!.value, 18);
+      const tradeBps = BigInt(Math.round(Number(document.querySelector<HTMLInputElement>(`#${pair.symbol}-share`)!.value) * 100));
+      const slippageBps = BigInt(Math.round(Number(document.querySelector<HTMLInputElement>(`#${pair.symbol}-slippage`)!.value) * 100));
+      if (takeProfit <= rebalance || rebalance <= 0n || tradeBps <= 0n || tradeBps > 10_000n || slippageBps > 1_000n) throw new Error("Use upper price > lower price, trade share 1-100%, and slippage 0-10%.");
+      const connectedWallet = wallet();
+      const deployment = { account: account!, abi: vaultArtifact.abi, bytecode: vaultArtifact.bytecode as `0x${string}`, args: [pair.token, usdm, pair.pool, account!, account!, takeProfit, rebalance, Number(tradeBps), Number(slippageBps)] };
+      set(`MetaMask will deploy ${pair.symbol} PolicyVault. Review the parameters and gas limit.`);
+      const gas = await client.estimateContractGas(deployment);
+      const hash = await connectedWallet.deployContract({ ...deployment, gas: gas + gas / 10n });
+      set(`${pair.symbol} PolicyVault sent: ${hash}. Waiting for confirmation...`);
+      const receipt = await client.waitForTransactionReceipt({ hash });
+      set(`${pair.symbol} PolicyVault deployed at ${receipt.contractAddress}. Send this transaction link to verify it.`);
     } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
   };
 }

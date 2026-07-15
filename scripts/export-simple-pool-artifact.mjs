@@ -9,3 +9,7 @@ await cp(
   "artifacts/contracts/DemoMarketFactory.sol/DemoMarketFactory.json",
   "web/src/generated/DemoMarketFactory.json"
 );
+await cp(
+  "artifacts/contracts/PolicyVault.sol/PolicyVault.json",
+  "web/src/generated/PolicyVault.json"
+);
