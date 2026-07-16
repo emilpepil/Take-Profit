@@ -1,9 +1,10 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createPublicClient, defineChain, formatUnits, getAddress, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 const MONAD_TESTNET_CHAIN_ID = 10143;
 const EXPECTED_KEEPER = "0xD88394629BbE7Be91B1eFE6E984e7aCb118edd8B";
+const statePath = "keeper/state.json";
 const vaults = [
   { symbol: "JAMES", asset: "0x8f32e211244706c9b0902a9bd823e1c768a032c2", vault: "0x88760064022811c60771fd5fb574895361189a2d" },
   { symbol: "EMO", asset: "0x3d07c291cc9a7eaa11fa2f2bd2894643c0923e6c", vault: "0x59f70bfabce71c8463ee97295e5af60ae4d05492" },
@@ -33,6 +34,48 @@ function actionFor({ price, takeProfit, rebalance, assetBalance, stableBalance, 
   return "no action";
 }
 
+function telegramEnabled(env) {
+  return env.KEEPER_TELEGRAM_ENABLED === "true";
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function loadNotificationState() {
+  try {
+    return JSON.parse(await readFile(statePath, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") return {};
+    throw new Error("Could not read keeper notification state.");
+  }
+}
+
+async function saveNotificationState(state) {
+  await mkdir("keeper", { recursive: true });
+  await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+}
+
+async function sendTelegramNotification(env, { symbol, priceUsd, action }) {
+  const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.TELEGRAM_CHAT_ID,
+      text: [
+        "Take Profit keeper alert",
+        "Network: Monad Testnet (10143)",
+        `Vault: ${symbol}`,
+        `Current price: ${Number(priceUsd).toFixed(4)} USDm`,
+        `Action ready: ${action}`,
+        "No transaction has been created, signed, or sent.",
+      ].join("\n"),
+    }),
+  });
+
+  if (!response.ok) throw new Error(`Telegram notification failed (HTTP ${response.status}).`);
+}
+
 const env = readEnv(await readFile(".env", "utf8"));
 if (!env.MONAD_TESTNET_RPC_URL || !env.KEEPER_PRIVATE_KEY) throw new Error("Set MONAD_TESTNET_RPC_URL and KEEPER_PRIVATE_KEY in .env.");
 
@@ -45,7 +88,7 @@ if (await client.getChainId() !== MONAD_TESTNET_CHAIN_ID) throw new Error("Refus
 
 async function inspect() {
   const report = [];
-  for (const vault of vaults) {
+  for (const [index, vault] of vaults.entries()) {
     const [keeper, price, takeProfit, rebalance, tradeBps, assetBalance, stableBalance] = await Promise.all([
       client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "keeper" }),
       client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "spotPriceE18" }),
@@ -55,10 +98,46 @@ async function inspect() {
       client.readContract({ address: vault.asset, abi: erc20Abi, functionName: "balanceOf", args: [vault.vault] }),
       client.readContract({ address: usdm, abi: erc20Abi, functionName: "balanceOf", args: [vault.vault] }),
     ]);
-    report.push({ symbol: vault.symbol, keeperMatches: keeper.toLowerCase() === account.address.toLowerCase(), priceUsd: formatUnits(price, 18), action: actionFor({ price, takeProfit, rebalance, assetBalance, stableBalance, tradeBps }), dryRun: true });
+    report.push({
+      symbol: vault.symbol,
+      keeperMatches: keeper.toLowerCase() === account.address.toLowerCase(),
+      priceUsd: formatUnits(price, 18),
+      action: actionFor({ price, takeProfit, rebalance, assetBalance, stableBalance, tradeBps }),
+      dryRun: true,
+    });
+    // The public testnet endpoint limits requests to 15/sec. Each vault needs seven reads.
+    if (index < vaults.length - 1) await delay(600);
   }
   console.table(report);
+  await notifyReadyActions(report);
   console.log("Dry-run complete: no transaction was created or signed.");
+}
+
+async function notifyReadyActions(report) {
+  if (!telegramEnabled(env)) return;
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
+    console.warn("Telegram notifications are enabled but TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.");
+    return;
+  }
+
+  const state = await loadNotificationState();
+  let changed = false;
+  for (const item of report) {
+    if (item.action === "no action") {
+      if (state[item.symbol]) {
+        delete state[item.symbol];
+        changed = true;
+      }
+      continue;
+    }
+
+    if (state[item.symbol]?.action === item.action) continue;
+    await sendTelegramNotification(env, item);
+    state[item.symbol] = { action: item.action };
+    changed = true;
+    console.log(`Telegram alert sent for ${item.symbol}.`);
+  }
+  if (changed) await saveNotificationState(state);
 }
 
 const watch = process.argv.includes("--watch");
