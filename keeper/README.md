@@ -38,6 +38,21 @@ To run it manually, double-click `keeper/run-local.cmd`, or run it from a termin
 
 The scheduled watcher still does not send blockchain transactions. It only calls the public Monad Testnet RPC and Telegram Bot API when an alert condition is reached.
 
+## One-time automatic JAMES test (Monad Testnet only)
+
+Automatic execution is deliberately disabled by default. To arm exactly one automatic JAMES execution, add all four values below to the ignored VPS `.env` file, then restart the service:
+
+```env
+AUTO_EXECUTE=true
+AUTO_EXECUTE_CONFIRMATION=MONAD_TESTNET_JAMES_ONCE
+AUTO_EXECUTE_SYMBOL=JAMES
+AUTO_EXECUTE_MAX_GAS=300000
+```
+
+The keeper refuses every symbol other than JAMES, simulates `executePolicy()` before signing, estimates gas and adds only a 10% buffer. It refuses to broadcast if that limit exceeds `AUTO_EXECUTE_MAX_GAS`. On Monad the gas limit is the amount charged, so do not raise the cap casually.
+
+After one confirmed execution, `keeper/auto-execution-state.json` prevents any second automatic trade, including after a VPS restart. It is ignored by Git. Telegram receives the transaction link only after confirmation. To return to observation-only mode, remove or set `AUTO_EXECUTE=false` and restart the service.
+
 ## Ubuntu VPS service
 
 For an independent 24/7 Ubuntu VPS, install Node.js 22 and Git, clone this repository, then create the ignored `.env` file on the server with the same Monad Testnet, keeper, and Telegram settings used locally. Restrict it to the server account:

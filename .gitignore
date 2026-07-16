@@ -9,4 +9,6 @@ web/src/generated/
 .env.local
 keeper/state.json
 keeper/notification.lock/
+keeper/auto-execution-state.json
+keeper/auto-execution.lock/
 *.log
