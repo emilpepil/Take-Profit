@@ -28,6 +28,7 @@ document.querySelector<HTMLDivElement>("#swaps")!.innerHTML = pairs.map((pair) =
 document.querySelector<HTMLDivElement>("#vaults")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} PolicyVault</h2><label>Take-profit price (USDm) <input id="${pair.symbol}-take" value="14" inputmode="decimal"/></label><label>Rebalance price (USDm) <input id="${pair.symbol}-rebalance" value="10" inputmode="decimal"/></label><label>Trade share (%) <input id="${pair.symbol}-share" value="25" inputmode="numeric"/></label><label>Max slippage (%) <input id="${pair.symbol}-slippage" value="1" inputmode="decimal"/></label><button id="${pair.symbol}-deploy" disabled>Deploy ${pair.symbol} PolicyVault</button></section>`).join("");
 document.querySelector<HTMLDivElement>("#funding")!.innerHTML = pairs.map((pair) => `<section><h2>Fund ${pair.symbol} vault</h2><label>${pair.symbol} <input id="${pair.symbol}-fund-asset" value="1000" inputmode="decimal"/></label><label>USDm <input id="${pair.symbol}-fund-usdm" value="10000" inputmode="decimal"/></label><button id="${pair.symbol}-fund" disabled>Approve and fund vault</button></section>`).join("");
 document.querySelector<HTMLDivElement>("#execution")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} policy status</h2><p id="${pair.symbol}-policy">Connect MetaMask to read the policy.</p><button id="${pair.symbol}-refresh">Refresh policy</button><button id="${pair.symbol}-execute" disabled>Execute policy</button></section>`).join("");
+document.querySelector<HTMLDivElement>("#keepers")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} keeper</h2><button id="${pair.symbol}-keeper" disabled>Assign keeper</button></section>`).join("");
 
 function wallet() {
   if (!window.ethereum || !account) throw new Error("Connect MetaMask first.");
@@ -96,7 +97,7 @@ document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
       }
     }
     account = getAddress((await window.ethereum.request({ method: "eth_requestAccounts" }) as string[])[0]);
-    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; await quote(pair); await refreshPolicy(pair); }
+    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-keeper`)!.disabled = false; await quote(pair); await refreshPolicy(pair); }
     set("Connected. You can swap or configure a PolicyVault.");
   } catch (error) { set(error instanceof Error ? error.message : "Connection failed."); }
 };
@@ -175,6 +176,18 @@ for (const pair of pairs) {
       await wait(await connectedWallet.writeContract({ ...request, gas: gas + gas / 10n }));
       set(`${pair.symbol} policy executed. Refreshing state.`);
       await refreshPolicy(pair);
+    } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
+  };
+
+  document.querySelector<HTMLButtonElement>(`#${pair.symbol}-keeper`)!.onclick = async () => {
+    try {
+      const keeper = getAddress(document.querySelector<HTMLInputElement>("#keeper-address")!.value);
+      set(`Assign ${keeper} as ${pair.symbol} keeper in MetaMask...`);
+      const connectedWallet = wallet();
+      const request = { account: account!, address: pair.vault, abi: vaultArtifact.abi, functionName: "setKeeper" as const, args: [keeper] };
+      const gas = await client.estimateContractGas(request);
+      await wait(await connectedWallet.writeContract({ ...request, gas: gas + gas / 10n }));
+      set(`${pair.symbol} keeper assigned. Send the transaction link to verify it.`);
     } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
   };
 }
