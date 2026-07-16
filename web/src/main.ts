@@ -9,6 +9,7 @@ const rpc = "https://testnet-rpc.monad.xyz";
 const chain = defineChain({ id: 10143, name: "Monad Testnet", nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 }, rpcUrls: { default: { http: [rpc] } } });
 const client = createPublicClient({ chain, transport: http(rpc) });
 let account: Address | undefined;
+const safeOwner = getAddress("0x84350B656e2727362a1c66Da657FCF9B8CA60015");
 const usdm = getAddress("0x0f1471d41e25e7880a3c3021dfcb5efb29079f71");
 const pairs = [
   { symbol: "JAMES", token: getAddress("0x8f32e211244706c9b0902a9bd823e1c768a032c2"), pool: getAddress("0x6ba5e36975ce93778543a512f2c99679daadaf04"), vault: getAddress("0x88760064022811c60771fd5fb574895361189a2d") },
@@ -29,6 +30,7 @@ document.querySelector<HTMLDivElement>("#vaults")!.innerHTML = pairs.map((pair) 
 document.querySelector<HTMLDivElement>("#funding")!.innerHTML = pairs.map((pair) => `<section><h2>Fund ${pair.symbol} vault</h2><label>${pair.symbol} <input id="${pair.symbol}-fund-asset" value="1000" inputmode="decimal"/></label><label>USDm <input id="${pair.symbol}-fund-usdm" value="10000" inputmode="decimal"/></label><button id="${pair.symbol}-fund" disabled>Approve and fund vault</button></section>`).join("");
 document.querySelector<HTMLDivElement>("#execution")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} policy status</h2><p id="${pair.symbol}-policy">Connect MetaMask to read the policy.</p><button id="${pair.symbol}-refresh">Refresh policy</button><button id="${pair.symbol}-execute" disabled>Execute policy</button></section>`).join("");
 document.querySelector<HTMLDivElement>("#keepers")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} keeper</h2><button id="${pair.symbol}-keeper" disabled>Assign keeper</button></section>`).join("");
+document.querySelector<HTMLDivElement>("#ownership")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} vault owner</h2><p>New owner: ${safeOwner}</p><button id="${pair.symbol}-ownership" disabled>Transfer ownership to Safe</button></section>`).join("");
 
 function wallet() {
   if (!window.ethereum || !account) throw new Error("Connect MetaMask first.");
@@ -97,7 +99,7 @@ document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
       }
     }
     account = getAddress((await window.ethereum.request({ method: "eth_requestAccounts" }) as string[])[0]);
-    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-keeper`)!.disabled = false; await quote(pair); await refreshPolicy(pair); }
+    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-keeper`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-ownership`)!.disabled = false; await quote(pair); await refreshPolicy(pair); }
     set("Connected. You can swap or configure a PolicyVault.");
   } catch (error) { set(error instanceof Error ? error.message : "Connection failed."); }
 };
@@ -188,6 +190,17 @@ for (const pair of pairs) {
       const gas = await client.estimateContractGas(request);
       await wait(await connectedWallet.writeContract({ ...request, gas: gas + gas / 10n }));
       set(`${pair.symbol} keeper assigned. Send the transaction link to verify it.`);
+    } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
+  };
+
+  document.querySelector<HTMLButtonElement>(`#${pair.symbol}-ownership`)!.onclick = async () => {
+    try {
+      set(`Transfer ${pair.symbol} vault ownership to Safe in MetaMask. Keeper will not change.`);
+      const connectedWallet = wallet();
+      const request = { account: account!, address: pair.vault, abi: vaultArtifact.abi, functionName: "transferOwnership" as const, args: [safeOwner] };
+      const gas = await client.estimateContractGas(request);
+      await wait(await connectedWallet.writeContract({ ...request, gas: gas + gas / 10n }));
+      set(`${pair.symbol} ownership transferred to Safe. Send the transaction link to verify it.`);
     } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
   };
 }
