@@ -11,7 +11,8 @@
     "export:deploy-artifact": "node scripts/export-simple-pool-artifact.mjs",
     "predeploy:ui": "npm run export:deploy-artifact",
     "deploy:ui": "vite web",
-    "build:deploy-ui": "npm run export:deploy-artifact && vite build web"
+    "build:deploy-ui": "npm run export:deploy-artifact && vite build web",
+    "keeper:dry-run": "node keeper/index.mjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^3.0.11",
