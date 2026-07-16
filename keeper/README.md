@@ -37,3 +37,30 @@ npm run keeper:telegram-test
 To run it manually, double-click `keeper/run-local.cmd`, or run it from a terminal. To keep it available after restarting the computer, create a Windows Task Scheduler task that runs this file at logon. The task must run under your Windows account because that account has access to the project folder and its `.env` file.
 
 The scheduled watcher still does not send blockchain transactions. It only calls the public Monad Testnet RPC and Telegram Bot API when an alert condition is reached.
+
+## Ubuntu VPS service
+
+For an independent 24/7 Ubuntu VPS, install Node.js 22 and Git, clone this repository, then create the ignored `.env` file on the server with the same Monad Testnet, keeper, and Telegram settings used locally. Restrict it to the server account:
+
+```bash
+chmod 600 .env
+```
+
+Run the following installer from the project root:
+
+```bash
+bash scripts/install-keeper-service.sh
+```
+
+It installs a `systemd` service that starts at VPS boot and restarts the read-only watcher if it fails. Check it with:
+
+```bash
+sudo systemctl status take-profit-keeper
+sudo journalctl -u take-profit-keeper -f
+```
+
+Stop it at any time with:
+
+```bash
+sudo systemctl disable --now take-profit-keeper
+```

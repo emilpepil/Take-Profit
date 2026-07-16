@@ -1,0 +1,18 @@
+[Unit]
+Description=Take Profit read-only Monad Testnet keeper
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__KEEPER_USER__
+WorkingDirectory=__PROJECT_DIR__
+ExecStart=/usr/bin/npm run keeper:watch
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
