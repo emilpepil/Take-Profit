@@ -8,4 +8,5 @@ web/src/generated/
 .env
 .env.local
 keeper/state.json
+keeper/notification.lock/
 *.log

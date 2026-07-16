@@ -1,10 +1,11 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createPublicClient, defineChain, formatUnits, getAddress, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 const MONAD_TESTNET_CHAIN_ID = 10143;
 const EXPECTED_KEEPER = "0xD88394629BbE7Be91B1eFE6E984e7aCb118edd8B";
 const statePath = "keeper/state.json";
+const notificationLockPath = "keeper/notification.lock";
 const vaults = [
   { symbol: "JAMES", asset: "0x8f32e211244706c9b0902a9bd823e1c768a032c2", vault: "0x88760064022811c60771fd5fb574895361189a2d" },
   { symbol: "EMO", asset: "0x3d07c291cc9a7eaa11fa2f2bd2894643c0923e6c", vault: "0x59f70bfabce71c8463ee97295e5af60ae4d05492" },
@@ -54,6 +55,24 @@ async function loadNotificationState() {
 async function saveNotificationState(state) {
   await mkdir("keeper", { recursive: true });
   await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+}
+
+async function withNotificationLock(action) {
+  try {
+    await mkdir(notificationLockPath);
+  } catch (error) {
+    if (error.code === "EEXIST") {
+      console.warn("Another keeper check is processing notifications; skipping this notification cycle.");
+      return;
+    }
+    throw error;
+  }
+
+  try {
+    await action();
+  } finally {
+    await rm(notificationLockPath, { recursive: true, force: true });
+  }
 }
 
 async function sendTelegramNotification(env, { symbol, priceUsd, action }) {
@@ -147,24 +166,26 @@ async function notifyReadyActions(report) {
     return;
   }
 
-  const state = await loadNotificationState();
-  let changed = false;
-  for (const item of report) {
-    if (item.action === "no action") {
-      if (state[item.symbol]) {
-        delete state[item.symbol];
-        changed = true;
+  await withNotificationLock(async () => {
+    const state = await loadNotificationState();
+    let changed = false;
+    for (const item of report) {
+      if (item.action === "no action") {
+        if (state[item.symbol]) {
+          delete state[item.symbol];
+          changed = true;
+        }
+        continue;
       }
-      continue;
-    }
 
-    if (state[item.symbol]?.action === item.action) continue;
-    await sendTelegramNotification(env, item);
-    state[item.symbol] = { action: item.action };
-    changed = true;
-    console.log(`Telegram alert sent for ${item.symbol}.`);
-  }
-  if (changed) await saveNotificationState(state);
+      if (state[item.symbol]?.action === item.action) continue;
+      await sendTelegramNotification(env, item);
+      state[item.symbol] = { action: item.action };
+      changed = true;
+      console.log(`Telegram alert sent for ${item.symbol}.`);
+    }
+    if (changed) await saveNotificationState(state);
+  });
 }
 
 const watch = process.argv.includes("--watch");
