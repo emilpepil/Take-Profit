@@ -18,6 +18,7 @@ const pairs = [
 const erc20 = [
   { type: "function", name: "approve", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] },
   { type: "function", name: "allowance", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "balanceOf", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
 ] as const;
 const status = document.querySelector<HTMLParagraphElement>("#status")!;
 const set = (value: string) => { status.textContent = value; };
@@ -26,6 +27,7 @@ const display = (amount: bigint, decimals: number) => Number(formatUnits(amount,
 document.querySelector<HTMLDivElement>("#swaps")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol}/USDm</h2><label>Direction <select id="${pair.symbol}-direction"><option value="buy">Buy ${pair.symbol} with USDm (price up)</option><option value="sell">Sell ${pair.symbol} for USDm (price down)</option></select></label><label>Amount in <input id="${pair.symbol}-amount" value="10000" inputmode="decimal"/></label><p id="${pair.symbol}-quote">Enter an amount to calculate the quote.</p><button id="${pair.symbol}-swap" disabled>Swap</button></section>`).join("");
 document.querySelector<HTMLDivElement>("#vaults")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} PolicyVault</h2><label>Take-profit price (USDm) <input id="${pair.symbol}-take" value="14" inputmode="decimal"/></label><label>Rebalance price (USDm) <input id="${pair.symbol}-rebalance" value="10" inputmode="decimal"/></label><label>Trade share (%) <input id="${pair.symbol}-share" value="25" inputmode="numeric"/></label><label>Max slippage (%) <input id="${pair.symbol}-slippage" value="1" inputmode="decimal"/></label><button id="${pair.symbol}-deploy" disabled>Deploy ${pair.symbol} PolicyVault</button></section>`).join("");
 document.querySelector<HTMLDivElement>("#funding")!.innerHTML = pairs.map((pair) => `<section><h2>Fund ${pair.symbol} vault</h2><label>${pair.symbol} <input id="${pair.symbol}-fund-asset" value="1000" inputmode="decimal"/></label><label>USDm <input id="${pair.symbol}-fund-usdm" value="10000" inputmode="decimal"/></label><button id="${pair.symbol}-fund" disabled>Approve and fund vault</button></section>`).join("");
+document.querySelector<HTMLDivElement>("#execution")!.innerHTML = pairs.map((pair) => `<section><h2>${pair.symbol} policy status</h2><p id="${pair.symbol}-policy">Connect MetaMask to read the policy.</p><button id="${pair.symbol}-refresh">Refresh policy</button><button id="${pair.symbol}-execute" disabled>Execute policy</button></section>`).join("");
 
 function wallet() {
   if (!window.ethereum || !account) throw new Error("Connect MetaMask first.");
@@ -40,6 +42,27 @@ async function approveIfNeeded(token: Address, spender: Address, amount: bigint,
   const approval = { account: account!, address: token, abi: erc20, functionName: "approve" as const, args: [spender, amount] };
   const gas = await client.estimateContractGas(approval);
   await wait(await connectedWallet.writeContract({ ...approval, gas: gas + gas / 10n }));
+}
+async function refreshPolicy(pair: typeof pairs[number]) {
+  const info = document.querySelector<HTMLParagraphElement>(`#${pair.symbol}-policy`)!;
+  const execute = document.querySelector<HTMLButtonElement>(`#${pair.symbol}-execute`)!;
+  try {
+    const [price, takeProfit, rebalance, assetBalance, stableBalance] = await Promise.all([
+      client.readContract({ address: pair.vault, abi: vaultArtifact.abi, functionName: "spotPriceE18" }),
+      client.readContract({ address: pair.vault, abi: vaultArtifact.abi, functionName: "takeProfitPriceE18" }),
+      client.readContract({ address: pair.vault, abi: vaultArtifact.abi, functionName: "rebalancePriceE18" }),
+      client.readContract({ address: pair.token, abi: erc20, functionName: "balanceOf", args: [pair.vault] }),
+      client.readContract({ address: usdm, abi: erc20, functionName: "balanceOf", args: [pair.vault] }),
+    ]) as [bigint, bigint, bigint, bigint, bigint];
+    let action = `Price ${display(price, 18)} USDm is inside the ${display(rebalance, 18)}-${display(takeProfit, 18)} band.`;
+    let enabled = false;
+    if (price >= takeProfit && assetBalance > 0n) { action = `Take profit ready: sell 25% of ${display(assetBalance, 18)} ${pair.symbol}.`; enabled = true; }
+    if (price <= rebalance && stableBalance > 0n) { action = `Rebalance ready: spend 25% of ${display(stableBalance, 6)} USDm.`; enabled = true; }
+    if (price >= takeProfit && assetBalance === 0n) action = "Take-profit threshold reached, but the vault has no asset balance.";
+    if (price <= rebalance && stableBalance === 0n) action = "Rebalance threshold reached, but the vault has no USDm balance.";
+    info.textContent = action;
+    execute.disabled = !enabled || !account;
+  } catch (error) { info.textContent = error instanceof Error ? error.shortMessage ?? error.message : "Unable to read policy."; execute.disabled = true; }
 }
 function inputs(pair: typeof pairs[number]) {
   const direction = document.querySelector<HTMLSelectElement>(`#${pair.symbol}-direction`)!.value as "buy" | "sell";
@@ -73,7 +96,7 @@ document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
       }
     }
     account = getAddress((await window.ethereum.request({ method: "eth_requestAccounts" }) as string[])[0]);
-    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; await quote(pair); }
+    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; await quote(pair); await refreshPolicy(pair); }
     set("Connected. You can swap or configure a PolicyVault.");
   } catch (error) { set(error instanceof Error ? error.message : "Connection failed."); }
 };
@@ -136,6 +159,22 @@ for (const pair of pairs) {
       const gas = await client.estimateContractGas(funding);
       await wait(await connectedWallet.writeContract({ ...funding, gas: gas + gas / 10n }));
       set(`${pair.symbol} PolicyVault funded. Send the funding transaction link to verify balances.`);
+    } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
+  };
+
+  document.querySelector<HTMLButtonElement>(`#${pair.symbol}-refresh`)!.onclick = () => { void refreshPolicy(pair); };
+  document.querySelector<HTMLButtonElement>(`#${pair.symbol}-execute`)!.onclick = async () => {
+    try {
+      await refreshPolicy(pair);
+      const execute = document.querySelector<HTMLButtonElement>(`#${pair.symbol}-execute`)!;
+      if (execute.disabled) throw new Error("Policy is not currently actionable.");
+      set(`Execute ${pair.symbol} policy in MetaMask...`);
+      const connectedWallet = wallet();
+      const request = { account: account!, address: pair.vault, abi: vaultArtifact.abi, functionName: "executePolicy" as const, args: [] as const };
+      const gas = await client.estimateContractGas(request);
+      await wait(await connectedWallet.writeContract({ ...request, gas: gas + gas / 10n }));
+      set(`${pair.symbol} policy executed. Refreshing state.`);
+      await refreshPolicy(pair);
     } catch (error) { set(error instanceof Error ? error.shortMessage ?? error.message : "Cancelled or failed."); }
   };
 }
