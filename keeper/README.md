@@ -29,3 +29,11 @@ Verify the Telegram connection without querying Monad or using a wallet:
 ```bash
 npm run keeper:telegram-test
 ```
+
+## Independent Windows launch
+
+`keeper/run-local.cmd` starts the read-only watcher outside Codex. It loads secrets only from the local ignored `.env` file and writes operational output to the ignored `keeper/watch.log` file.
+
+To run it manually, double-click `keeper/run-local.cmd`, or run it from a terminal. To keep it available after restarting the computer, create a Windows Task Scheduler task that runs this file at logon. The task must run under your Windows account because that account has access to the project folder and its `.env` file.
+
+The scheduled watcher still does not send blockchain transactions. It only calls the public Monad Testnet RPC and Telegram Bot API when an alert condition is reached.
