@@ -132,7 +132,8 @@ async function inspect() {
       dryRun: true,
     });
     // The public testnet endpoint limits requests to 15/sec. Each vault needs seven reads.
-    if (index < vaults.length - 1) await delay(600);
+    // Keep a full one-second gap between vault batches to leave room for retries.
+    if (index < vaults.length - 1) await delay(1_000);
   }
   console.table(report);
   await notifyReadyActions(report);
