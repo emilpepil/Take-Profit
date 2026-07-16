@@ -53,6 +53,12 @@ The keeper refuses every symbol other than JAMES, simulates `executePolicy()` be
 
 After one confirmed execution, `keeper/auto-execution-state.json` prevents any second automatic trade, including after a VPS restart. It is ignored by Git. Telegram receives the transaction link only after confirmation. To return to observation-only mode, remove or set `AUTO_EXECUTE=false` and restart the service.
 
+## Planned serial automation: Safe approval required
+
+`SerialPolicyVault.sol` is a separate, not-yet-deployed contract for the later serial mode. It is not an upgrade of the three existing vaults and cannot spend their funds. Its Safe owner must call `setAutomationConfig(...)` before a keeper can execute anything automatically. That on-chain Safe transaction defines all three limits: enabled/disabled, a maximum of 1–24 executions per UTC day, and a 30-second to 24-hour cooldown.
+
+The Safe remains the only account permitted to execute a manual policy, change policy thresholds, change the keeper, change automation limits, or withdraw funds. The keeper gets only `executeAutomation()`, which checks the Safe-approved limits on-chain before each swap. Deploying or migrating to this contract is intentionally a later, separately approved step.
+
 ## Ubuntu VPS service
 
 For an independent 24/7 Ubuntu VPS, install Node.js 22 and Git, clone this repository, then create the ignored `.env` file on the server with the same Monad Testnet, keeper, and Telegram settings used locally. Restrict it to the server account:
