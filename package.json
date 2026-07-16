@@ -13,7 +13,8 @@
     "deploy:ui": "vite web",
     "build:deploy-ui": "npm run export:deploy-artifact && vite build web",
     "keeper:dry-run": "node keeper/index.mjs",
-    "keeper:watch": "node keeper/index.mjs --watch"
+    "keeper:watch": "node keeper/index.mjs --watch",
+    "keeper:telegram-test": "node keeper/index.mjs --test-telegram"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^3.0.11",

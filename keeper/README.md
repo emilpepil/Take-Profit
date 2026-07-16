@@ -23,3 +23,9 @@ KEEPER_TELEGRAM_ENABLED=true
 Telegram requires that a user contacts a bot before the bot can message that private user. The Bot API `sendMessage` method uses the chat ID and message text configured above. See the official [Telegram bot tutorial](https://core.telegram.org/bots/tutorial) and [Bot API](https://core.telegram.org/bots/api#sendmessage).
 
 `keeper/state.json` is created locally to prevent duplicate alerts and is ignored by Git. Alerts remain read-only: this service never creates, signs, or broadcasts a trade.
+
+Verify the Telegram connection without querying Monad or using a wallet:
+
+```bash
+npm run keeper:telegram-test
+```

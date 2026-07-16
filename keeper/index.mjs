@@ -76,7 +76,33 @@ async function sendTelegramNotification(env, { symbol, priceUsd, action }) {
   if (!response.ok) throw new Error(`Telegram notification failed (HTTP ${response.status}).`);
 }
 
+async function sendTelegramTest(env) {
+  const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.TELEGRAM_CHAT_ID,
+      text: "Take Profit Telegram test successful. No wallet or vault action was requested.",
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const reason = typeof payload.description === "string" ? `: ${payload.description}` : "";
+    throw new Error(`Telegram test notification failed (HTTP ${response.status})${reason}`);
+  }
+}
+
 const env = readEnv(await readFile(".env", "utf8"));
+const testTelegram = process.argv.includes("--test-telegram");
+if (testTelegram) {
+  if (!telegramEnabled(env)) throw new Error("Set KEEPER_TELEGRAM_ENABLED=true in .env before testing Telegram.");
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) throw new Error("Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env before testing Telegram.");
+  await sendTelegramTest(env);
+  console.log("Telegram test alert sent. No wallet, RPC, vault, or transaction was used.");
+  process.exit(0);
+}
+
 if (!env.MONAD_TESTNET_RPC_URL || !env.KEEPER_PRIVATE_KEY) throw new Error("Set MONAD_TESTNET_RPC_URL and KEEPER_PRIVATE_KEY in .env.");
 
 const account = privateKeyToAccount(env.KEEPER_PRIVATE_KEY);
