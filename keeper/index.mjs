@@ -43,19 +43,31 @@ const chain = defineChain({ id: MONAD_TESTNET_CHAIN_ID, name: "Monad Testnet", n
 const client = createPublicClient({ chain, transport: http(env.MONAD_TESTNET_RPC_URL) });
 if (await client.getChainId() !== MONAD_TESTNET_CHAIN_ID) throw new Error("Refusing to run outside Monad Testnet (chain ID 10143).");
 
-const report = [];
-for (const vault of vaults) {
-  const [keeper, price, takeProfit, rebalance, tradeBps, assetBalance, stableBalance] = await Promise.all([
-    client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "keeper" }),
-    client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "spotPriceE18" }),
-    client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "takeProfitPriceE18" }),
-    client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "rebalancePriceE18" }),
-    client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "tradeBps" }),
-    client.readContract({ address: vault.asset, abi: erc20Abi, functionName: "balanceOf", args: [vault.vault] }),
-    client.readContract({ address: usdm, abi: erc20Abi, functionName: "balanceOf", args: [vault.vault] }),
-  ]);
-  report.push({ symbol: vault.symbol, keeperMatches: keeper.toLowerCase() === account.address.toLowerCase(), priceUsd: formatUnits(price, 18), action: actionFor({ price, takeProfit, rebalance, assetBalance, stableBalance, tradeBps }), dryRun: true });
+async function inspect() {
+  const report = [];
+  for (const vault of vaults) {
+    const [keeper, price, takeProfit, rebalance, tradeBps, assetBalance, stableBalance] = await Promise.all([
+      client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "keeper" }),
+      client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "spotPriceE18" }),
+      client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "takeProfitPriceE18" }),
+      client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "rebalancePriceE18" }),
+      client.readContract({ address: vault.vault, abi: vaultAbi, functionName: "tradeBps" }),
+      client.readContract({ address: vault.asset, abi: erc20Abi, functionName: "balanceOf", args: [vault.vault] }),
+      client.readContract({ address: usdm, abi: erc20Abi, functionName: "balanceOf", args: [vault.vault] }),
+    ]);
+    report.push({ symbol: vault.symbol, keeperMatches: keeper.toLowerCase() === account.address.toLowerCase(), priceUsd: formatUnits(price, 18), action: actionFor({ price, takeProfit, rebalance, assetBalance, stableBalance, tradeBps }), dryRun: true });
+  }
+  console.table(report);
+  console.log("Dry-run complete: no transaction was created or signed.");
 }
 
-console.table(report);
-console.log("Dry-run complete: no transaction was created or signed.");
+const watch = process.argv.includes("--watch");
+if (!watch) {
+  await inspect();
+} else {
+  const intervalSeconds = Number(env.KEEPER_POLL_INTERVAL_SECONDS ?? 30);
+  if (!Number.isInteger(intervalSeconds) || intervalSeconds < 10) throw new Error("KEEPER_POLL_INTERVAL_SECONDS must be an integer of at least 10.");
+  console.log(`Watch mode started: checking every ${intervalSeconds} seconds. Press Ctrl+C to stop.`);
+  await inspect();
+  setInterval(() => { void inspect().catch((error) => console.error("Watch check failed:", error.message)); }, intervalSeconds * 1_000);
+}
