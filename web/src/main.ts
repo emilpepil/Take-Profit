@@ -8,6 +8,16 @@ import eoaExecutorV3Artifact from "./generated/EoaTakeProfitExecutorV3.json";
 import "./style.css";
 import "./market-controls.css";
 
+// Cloudflare Pages serves this Vite SPA for both `/` and `/app`. Keep the
+// product dashboard on the explicit app route, leaving `/` for the public
+// landing page and hackathon introduction.
+const isAppRoute = window.location.pathname === "/app" || window.location.pathname.startsWith("/app/");
+const landingPage = document.querySelector<HTMLElement>("#landing-page")!;
+const appShell = document.querySelector<HTMLElement>("#app-shell")!;
+landingPage.hidden = isAppRoute;
+appShell.hidden = !isAppRoute;
+document.title = isAppRoute ? "Take Profit · Monad Testnet" : "Take Profit · Automated exits on Monad";
+
 declare global { interface Window { ethereum?: { request(args: { method: string; params?: unknown }): Promise<unknown> } } }
 
 const rpc = "https://testnet-rpc.monad.xyz";

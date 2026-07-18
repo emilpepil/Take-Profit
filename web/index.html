@@ -6,7 +6,21 @@
     <title>Take Profit  Monad Testnet</title>
   </head>
   <body>
-    <div class="app-shell">
+    <main id="landing-page" class="landing-page" hidden>
+      <header class="landing-nav"><a class="landing-brand" href="/">Take Profit</a><a class="ghost-button" href="/app">Open app</a></header>
+      <section class="landing-hero">
+        <p class="eyebrow">Monad Testnet · Spark Hackathon</p>
+        <h1>Automated take-profit, while your tokens stay in your wallet.</h1>
+        <p>Create multiple target levels, use slippage protection, and receive confirmed execution updates in Telegram.</p>
+        <div class="landing-actions"><a class="primary-button" href="/app">Launch Take Profit</a><a class="ghost-button" href="https://faucet.monad.xyz/" target="_blank" rel="noreferrer">Get Testnet MON ↗</a></div>
+      </section>
+      <section class="landing-features" aria-label="Product features">
+        <article><strong>Multi-level exits</strong><span>Create independent take-profit rules for each asset.</span></article>
+        <article><strong>Autonomous keeper</strong><span>Checks targets every 10 seconds and settles eligible rules.</span></article>
+        <article><strong>Transparent results</strong><span>See execution history and receive Telegram notifications.</span></article>
+      </section>
+    </main>
+    <div id="app-shell" class="app-shell">
       <aside class="sidebar">
         <div class="brand"><span class="brand-mark">M</span><span><strong>Monad</strong><small>Testnet Active</small></span></div>
         <nav class="nav" aria-label="Primary navigation">
