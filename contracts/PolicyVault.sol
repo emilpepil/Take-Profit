@@ -37,17 +37,20 @@ contract PolicyVault is Ownable, ReentrancyGuard {
     uint256 public rebalancePriceE18;
     uint16 public tradeBps;
     uint16 public maxSlippageBps;
+    bool public policyActive;
 
     error Unauthorized();
     error InvalidPool();
     error InvalidPolicy();
     error InvalidTokenDecimals();
     error InvalidAmount();
+    error PolicyInactive();
     error PolicyNotActionable(uint256 spotPriceE18);
 
     event Funded(address indexed owner, uint256 assetAmount, uint256 stableAmount);
     event PolicyExecuted(Action indexed action, uint256 spotPriceE18, uint256 amountIn, uint256 amountOut);
     event PolicyUpdated(uint256 takeProfitPriceE18, uint256 rebalancePriceE18, uint16 tradeBps, uint16 maxSlippageBps);
+    event PolicyCancelled(address indexed owner);
     event KeeperUpdated(address indexed keeper);
 
     constructor(
@@ -90,6 +93,7 @@ contract PolicyVault is Ownable, ReentrancyGuard {
     }
 
     function executePolicy() external onlyKeeperOrOwner nonReentrant returns (Action action, uint256 amountOut) {
+        if (!policyActive) revert PolicyInactive();
         uint256 price = spotPriceE18();
         IERC20 tokenIn;
         uint256 amountIn;
@@ -130,6 +134,13 @@ contract PolicyVault is Ownable, ReentrancyGuard {
         _setPolicy(takeProfitPriceE18_, rebalancePriceE18_, tradeBps_, maxSlippageBps_);
     }
 
+    /// @notice Stops automated execution while keeping vault funds under owner control.
+    function cancelPolicy() external onlyOwner {
+        if (!policyActive) revert PolicyInactive();
+        policyActive = false;
+        emit PolicyCancelled(msg.sender);
+    }
+
     function withdraw(IERC20 token, uint256 amount, address recipient) external onlyOwner nonReentrant {
         if (recipient == address(0) || amount == 0) revert InvalidAmount();
         token.safeTransfer(recipient, amount);
@@ -141,6 +152,7 @@ contract PolicyVault is Ownable, ReentrancyGuard {
         rebalancePriceE18 = rebalancePriceE18_;
         tradeBps = tradeBps_;
         maxSlippageBps = maxSlippageBps_;
+        policyActive = true;
         emit PolicyUpdated(takeProfitPriceE18_, rebalancePriceE18_, tradeBps_, maxSlippageBps_);
     }
 }

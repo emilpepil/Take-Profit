@@ -6,7 +6,13 @@ The script only uses a public RPC client. It never creates, signs, or broadcasts
 
 It refuses any chain other than Monad Testnet (10143). Keep `KEEPER_PRIVATE_KEY` in the ignored `.env` file only.
 
-To keep checking locally, run `npm run keeper:watch`. The default interval is 30 seconds. Set `KEEPER_POLL_INTERVAL_SECONDS` in `.env` to a whole number of seconds no lower than 10. Stop the monitor with `Ctrl+C`.
+To keep checking locally, run `npm run keeper:watch`. The default interval is 10 seconds. Set `KEEPER_POLL_INTERVAL_SECONDS` in `.env` to a whole number of seconds no lower than 10. Stop the monitor with `Ctrl+C`.
+
+## Demo Faucet
+
+The health API also exposes a testnet-only Demo Faucet. It transfers a fixed bundle of USDm, JAMES, EMO, and CHOG after the wallet signs a claim message; the signature is only proof of address ownership and never grants token spending approval. Claims are stored server-side and limited to one bundle per wallet every four hours. MON is deliberately excluded: users obtain it from the official Monad Faucet.
+
+Configure a separately funded, testnet-only wallet by copying `take-profit-faucet.env.example` outside the repository to `/home/mongangstudio/take-profit-faucet.env`, set its key and `DEMO_FAUCET_ENABLED=true`, then restart `take-profit-keeper-health`. Do not reuse the keeper, deployer, or personal wallet key. The faucet wallet needs a small MON balance for transfer gas and the four demo-token balances.
 
 ## Optional Telegram alerts
 
@@ -50,6 +56,18 @@ AUTO_EXECUTE_MAX_GAS=300000
 ```
 
 The keeper refuses every symbol other than JAMES, simulates `executePolicy()` before signing, estimates gas and adds only a 10% buffer. It refuses to broadcast if that limit exceeds `AUTO_EXECUTE_MAX_GAS`. On Monad the gas limit is the amount charged, so do not raise the cap casually.
+
+## V2 rule execution safety
+
+For a multi-level V2 rule, the keeper must be armed with one explicit policy ID, an exact maximum token amount, and a per-run gas cap. It retries only **RPC reads, simulation, and gas estimation** before a transaction is broadcast. It never blindly resubmits after broadcast because the first transaction may already be pending or mined.
+
+When Telegram is enabled, the keeper sends short messages for these outcomes:
+
+- RPC temporarily limited — no transaction was sent; the next safe check will retry;
+- estimated gas above the configured rule cap — no transaction was sent;
+- transaction confirmed — includes the MonadVision link and actual configured gas limit.
+
+The on-chain V2 policy already stores its own `maxSlippageBps`; swaps revert if the received amount is below that policy's minimum. The current JAMES rules use 1% slippage. Each new rule can also save a `Max keeper gas` value through the local SSH tunnel: the owner signs that setting in MetaMask, the keeper accepts only owner-signed values between 21,000 and 500,000, and applies the lower of that per-rule cap and its server-side cap. Gas limits remain off-chain keeper safeguards: they do not change the swap price and cannot be raised after broadcast.
 
 After one confirmed execution, `keeper/auto-execution-state.json` prevents any second automatic trade, including after a VPS restart. It is ignored by Git. Telegram receives the transaction link only after confirmation. To return to observation-only mode, remove or set `AUTO_EXECUTE=false` and restart the service.
 

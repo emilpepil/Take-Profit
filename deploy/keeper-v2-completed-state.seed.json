@@ -1,0 +1,11 @@
+{
+  "successfulExecutions": 0,
+  "completedV2Policies": [
+    "0xb8467cac60ce9087407942c7812820351436baea:0x55db95b0772633664ba1f482741fe4dd22e0d8bb:4"
+  ],
+  "lastV2Execution": {
+    "policyId": "4",
+    "hash": "0xc3481b3751d159748d0554ee81a3a44c635d418d8217e16c80ca3d81b369a95f",
+    "completedAt": "2026-07-17T13:00:14.000Z"
+  }
+}

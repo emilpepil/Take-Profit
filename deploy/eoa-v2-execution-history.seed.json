@@ -1,0 +1,46 @@
+[
+  {
+    "executor": "0xb8467CAc60cE9087407942c7812820351436bAea",
+    "owner": "0x55dB95b0772633664Ba1F482741fe4DD22e0d8bB",
+    "policyId": "1",
+    "amountIn": "3",
+    "amountOut": "56.935858",
+    "priceUsd": "19.04357510542755502",
+    "gasLimit": "310955",
+    "hash": "0x955234f2872a21fd88a8bf1b898dc970300a4bf1d77b4c81e3e97c7f45ff5003",
+    "executedAt": "2026-07-17T15:08:18.000Z"
+  },
+  {
+    "executor": "0xb8467CAc60cE9087407942c7812820351436bAea",
+    "owner": "0x55dB95b0772633664Ba1F482741fe4DD22e0d8bB",
+    "policyId": "2",
+    "amountIn": "5",
+    "amountOut": "94.788763",
+    "priceUsd": "19.0278579909989426",
+    "gasLimit": "310955",
+    "hash": "0x01dad360c00f871f5cc2b78ffe6a7bc48376b07fa5888805bff0c2df4dcafdc9",
+    "executedAt": "2026-07-17T15:08:19.000Z"
+  },
+  {
+    "executor": "0xb8467CAc60cE9087407942c7812820351436bAea",
+    "owner": "0x55dB95b0772633664Ba1F482741fe4DD22e0d8bB",
+    "policyId": "4",
+    "amountIn": "0.01",
+    "amountOut": "0.146594",
+    "priceUsd": "14.703621974530209043",
+    "gasLimit": "310955",
+    "hash": "0xc3481b3751d159748d0554ee81a3a44c635d418d8217e16c80ca3d81b369a95f",
+    "executedAt": "2026-07-17T13:00:14.000Z"
+  },
+  {
+    "executor": "0xb8467CAc60cE9087407942c7812820351436bAea",
+    "owner": "0x55dB95b0772633664Ba1F482741fe4DD22e0d8bB",
+    "policyId": "5",
+    "amountIn": "2",
+    "amountOut": "37.879001",
+    "priceUsd": "19.001706021795453154",
+    "gasLimit": "310955",
+    "hash": "0xc0cf4b15234535bb68cb7de894d3249ab0fdee0b5cba9a04cab96965a932ee93",
+    "executedAt": "2026-07-17T15:08:20.000Z"
+  }
+]

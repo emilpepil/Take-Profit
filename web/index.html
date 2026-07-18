@@ -1,1 +1,85 @@
-<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Take Profit Demo</title></head><body><main><p class="eyebrow">Monad Testnet · Demo Market</p><h1>Move demo prices</h1><p>Swap USDm for an asset to raise its USDm price, or sell the asset for USDm to lower it. Quotes include the 0.30% pool fee and use 1% slippage protection.</p><button id="connect">Connect MetaMask</button><section id="swaps"></section><h1>Deploy PolicyVault</h1><p>Each vault uses your connected wallet as owner and keeper. Deployment creates only the vault; funding and policy execution are separate steps.</p><section id="vaults"></section><h1>Fund PolicyVault</h1><p>Approvals are exact, not unlimited. Funding each vault may require up to three MetaMask confirmations.</p><section id="funding"></section><h1>Execute Policy</h1><p>Manual confirmation only. The button unlocks only when the current price reaches a configured policy threshold and the vault has the required balance.</p><section id="execution"></section><h1>Assign test keeper</h1><p>The keeper can only execute existing policy rules. It cannot withdraw funds or change policy settings.</p><label>Keeper address <input id="keeper-address" value="0xD88394629BbE7Be91B1eFE6E984e7aCb118edd8B"/></label><section id="keepers"></section><h1>Transfer vault ownership to Safe</h1><p>Safe 2-of-3 becomes the administrator. Keeper stays unchanged. Each transfer requires owner confirmation in MetaMask and cannot be undone without Safe approval.</p><section id="ownership"></section><p id="status" role="status"></p></main><script type="module" src="/src/main.ts"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Take Profit  Monad Testnet</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">M</span><span><strong>Monad</strong><small>Testnet Active</small></span></div>
+        <nav class="nav" aria-label="Primary navigation">
+          <button class="nav-item active" type="button" data-tab="portfolio"> <span>Portfolio</span></button>
+          <button class="nav-item" type="button" data-tab="take-profit"> <span>Take Profit</span></button>
+          <button class="nav-item" type="button" data-tab="rebalancing"> <span>Rebalancing</span></button>
+        </nav>
+        <section class="sidebar-demo-guide" aria-labelledby="demo-guide-title">
+          <p class="eyebrow">New here?</p>
+          <h2 id="demo-guide-title">Run the demo</h2>
+          <p>Get MON, claim demo tokens, create a rule and watch it execute.</p>
+          <button id="open-demo-guide" class="ghost-button sidebar-guide-button" type="button">Start demo</button>
+        </section>
+        <div class="sidebar-bottom">
+          <button class="primary-button create-rule" type="button" data-tab="take-profit"> Create New Rule</button>
+          <a href="#status">Documentation</a><a href="#status">Support</a>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <h1>Take Profit</h1>
+          <div class="topbar-actions"><span class="network-pill"><i></i> Monad Testnet</span><button id="connect" class="primary-button">Connect wallet</button></div>
+        </header>
+
+        <section id="portfolio-panel" class="tab-panel active">
+          <div class="page-heading"><div><p class="eyebrow">Portfolio overview</p><h2>Your assets</h2></div><button class="ghost-button" type="button" data-tab="take-profit">Create rule</button></div>
+          <div class="metric-grid">
+            <article class="metric-card"><span>Total value</span><strong id="portfolio-total-value">--</strong><small>USDm across tracked test assets</small></article>
+            <article id="portfolio-change-card" class="metric-card positive"><span>24h change</span><strong id="portfolio-24h-change">--</strong><small id="portfolio-change-note">Building live price history</small></article>
+            <article class="metric-card"><span>Active rules</span><strong id="portfolio-active-rules">0</strong><button id="view-all-rules" class="text-button" type="button">View all</button></article>
+          </div>
+          <section class="surface portfolio-table"><div class="section-title"><div><h3>Your assets</h3><p>Price, balance and available actions</p></div><span class="filter"> Filter</span></div><div class="table-head"><span>Asset</span><span>Price / 24h</span><span>Holdings</span><span>Action</span></div><div id="asset-rows" class="asset-rows"></div></section>
+          <section class="surface demo-faucet-panel"><div class="section-title"><div><p class="eyebrow">Demo onboarding</p><h3>Demo Faucet</h3><p>Claim a small test bundle once every 4 hours. MON is available only from the official Monad Faucet.</p></div><a class="ghost-button" href="https://faucet.monad.xyz/" target="_blank" rel="noreferrer">Get Testnet MON ↗</a></div><div class="demo-faucet-actions"><div><strong>Bundle</strong><span>10,000 USDm · 100 JAMES · 100 EMO · 100 CHOG</span></div><button id="claim-demo-faucet" class="primary-button" type="button" disabled>Connect wallet to claim</button></div><div class="demo-faucet-tools"><button id="add-demo-tokens" class="ghost-button" type="button" disabled>Add demo tokens to MetaMask</button><button id="fund-demo-faucet" class="ghost-button faucet-owner-action" type="button" hidden>Fund 1,000 demo bundles</button></div><p id="demo-faucet-status" class="demo-faucet-status">Connect MetaMask to claim demo tokens.</p></section>
+          <section class="surface market-panel"><div class="section-title"><div><h3>Demo market controls</h3><p>Move prices to test policy thresholds.</p></div><span class="status-pill">Testnet</span></div><div id="trade-panel" class="trade-panel"><div class="trade-field"><div class="trade-label"><span>Sell</span><small id="sell-balance">0 USDm</small></div><input id="market-amount" value="0" inputmode="decimal" aria-label="Amount to swap"/><select id="market-sell-token" aria-label="Sell token"><option value="USDm">USDm</option><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select></div><button id="market-switch" class="swap-switch" type="button" aria-label="Swap asset direction">&darr;</button><div class="trade-field"><div class="trade-label"><span>Buy</span><small id="buy-balance">0 JAMES</small></div><output id="market-output">0</output><select id="market-buy-token" aria-label="Buy token"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option><option value="USDm">USDm</option></select></div><p id="market-quote" class="trade-quote">Enter an amount to calculate the quote.</p><button id="market-swap" class="trade-submit" type="button" disabled>Connect wallet to swap</button></div><div id="swaps" class="legacy-controls"></div></section>
+        </section>
+
+        <section id="take-profit-panel" class="tab-panel">
+          <div class="page-heading"><div><p class="eyebrow">Automated exits</p><h2>Take-profit rules</h2></div><span class="status-pill live"><i></i> Policies ready</span></div>
+          <section class="surface smart-account-panel eoa-automation-panel"><div class="section-title"><div><p class="eyebrow">Your wallet</p><h3>Quick automation</h3><p>Your tokens stay in MetaMask. When you create the first rule, Take Profit prepares the executor, exact approval and rule automatically.</p></div><span id="eoa-state" class="status-pill">Not connected</span></div><p id="executor-status">Choose an asset and rule parameters below, then create the rule.</p><select id="executor-asset" class="legacy-controls" aria-label="Executor asset"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select><button id="deploy-eoa-executor" class="legacy-controls" type="button"></button></section>
+          <section class="surface smart-account-panel legacy-controls"><span id="safe-state"></span><input id="safe-address"/><button id="use-safe" type="button"></button><p id="safe-status"></p><select id="module-asset"><option value="JAMES">JAMES</option></select><button id="deploy-safe-module" type="button"></button><p id="module-status"></p></section>
+          <section class="rule-builder"><div class="rule-config surface"><div class="section-title"><div><p class="eyebrow"> Configuration</p><h3>Create rule</h3></div></div><label>Select asset<select id="rule-asset"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select><small id="rule-available">Connect wallet to load Safe balance</small></label><div class="rule-input-grid"><div class="price-inputs"><label>Current price<input id="rule-current-price" value="" readonly/></label><label>Target price<input id="rule-take" type="text" value="" inputmode="decimal" disabled/></label></div><div class="manual-inputs"><label>Target growth (%)<input id="growth-input" type="text" value="100" inputmode="decimal"/></label><label>Amount to sell<input id="sell-input" type="text" value="0" inputmode="decimal" disabled/></label></div></div><div class="range-row"><span>Target growth</span><strong id="growth-value">+100%</strong></div><input id="growth-range" type="range" min="-90" max="500" value="100"/><div class="range-scale"><span>-90%</span><span>+205%</span><span>+500%</span></div><div class="range-row"><span>Amount to sell</span><strong id="share-value">25%</strong></div><input id="rule-share" type="range" min="1" max="100" value="25"/><div class="range-scale"><span>1%</span><span>50%</span><span>100%</span></div><div class="sell-amount"><span>Sell amount</span><strong id="sell-amount"></strong></div></div><aside class="rule-summary surface"><h3>Summary</h3><dl><div><dt>Action</dt><dd class="sell-text">Sell</dd></div><div><dt>Asset</dt><dd id="summary-asset"></dd></div><div><dt>Current price</dt><dd id="summary-current-price"></dd></div><div><dt>Target price</dt><dd id="summary-price"></dd></div></dl><div class="estimated"><span>Estimated profit</span><strong id="summary-return"></strong></div><p>Sell <b id="summary-sentence"></b></p><button id="create-rule" class="primary-button" type="button" disabled>Create Safe rule</button><small> Safe owner confirmation required</small></aside></section><section class="surface existing-rules"><div class="section-title"><div><h3>Existing Rules</h3><p>Rules configured for your Smart Account.</p><p id="keeper-live-status" class="keeper-live-status">Checking keeper status…</p></div><button id="refresh-rules" class="ghost-button" type="button">Refresh</button></div><div class="rules-head"><span>Asset</span><span>Condition</span><span>Action</span><span>Status</span><span></span></div><div id="existing-rules-body"></div></section><div id="vaults" class="legacy-controls"></div><div id="funding" class="legacy-controls"></div><div id="execution" class="legacy-controls"></div><div id="keepers" class="legacy-controls"></div><div id="ownership" class="legacy-controls"></div><input id="keeper-address" class="legacy-controls" value="0xD88394629BbE7Be91B1eFE6E984e7aCb118edd8B" />
+        </section>
+
+        <section id="rebalancing-panel" class="tab-panel"><div class="coming-soon surface"><span class="coming-icon"></span><p class="eyebrow">Portfolio automation</p><h2>Auto-Rebalancing</h2><p>Maintain your target allocations automatically across supported assets. Existing price-band policies remain available in Take Profit.</p><span class="status-pill">Coming soon</span></div></section>
+        <p id="status" role="status" aria-live="polite">Connect a wallet to load live policy status.</p>
+      </main>
+    </div>
+    <div id="wallet-drawer-backdrop" class="wallet-drawer-backdrop" hidden></div>
+    <aside id="wallet-drawer" class="wallet-drawer" aria-labelledby="wallet-drawer-title" aria-hidden="true">
+      <div class="drawer-heading"><div><p class="eyebrow">Connected wallet</p><h2 id="wallet-drawer-title">MetaMask</h2></div><button id="close-wallet-drawer" class="drawer-close" type="button" aria-label="Close wallet menu">x</button></div>
+      <div class="wallet-drawer-address"><span id="drawer-wallet-address">Not connected</span><span class="status-pill live"><i></i> Monad Testnet</span></div>
+      <p>This disconnects MetaMask from Take Profit on this device. Your assets remain in your wallet and Safe.</p>
+      <button id="disconnect-wallet" class="danger-button" type="button">Disconnect MetaMask</button>
+    </aside>
+    <div id="demo-guide-backdrop" class="demo-guide-backdrop" hidden>
+      <section class="demo-guide-modal" role="dialog" aria-modal="true" aria-labelledby="demo-guide-modal-title">
+        <div class="demo-guide-heading">
+          <div><p class="eyebrow">Take Profit demo</p><h2 id="demo-guide-modal-title">Run the demo in 7 steps</h2></div>
+          <button id="close-demo-guide" class="rule-settings-close" type="button" aria-label="Close instructions">×</button>
+        </div>
+        <p class="demo-guide-intro">Everything below runs on Monad Testnet. Testnet tokens have no real value.</p>
+        <ol class="demo-guide-steps">
+          <li><span>1</span><div><strong>Connect MetaMask</strong><small>Switch to Monad Testnet and connect the wallet you will use for the demo.</small></div></li>
+          <li><span>2</span><div><strong>Get Testnet MON</strong><small>MON pays network fees. Take Profit does not distribute MON.</small><a class="primary-button demo-faucet-link" href="https://faucet.monad.xyz/" target="_blank" rel="noreferrer">Open Monad Faucet ↗</a></div></li>
+          <li><span>3</span><div><strong>Claim demo tokens</strong><small>Use the in-app Demo Faucet to receive test USDm and tradable demo assets. One claim is available every 4 hours.</small></div></li>
+          <li><span>4</span><div><strong>Connect Telegram</strong><small>Open the Take Profit bot and link it to this wallet to receive execution notifications.</small></div></li>
+          <li><span>5</span><div><strong>Create take-profit levels</strong><small>Choose an asset, amount, target price and slippage. You can create multiple independent levels.</small></div></li>
+          <li><span>6</span><div><strong>Move the demo price</strong><small>Use Demo market controls to swap USDm for the asset and trigger the target price.</small></div></li>
+          <li><span>7</span><div><strong>Confirm profit</strong><small>The keeper executes eligible rules, USDm returns to MetaMask, and the result appears in Execution history and Telegram.</small></div></li>
+        </ol>
+      </section>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

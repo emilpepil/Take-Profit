@@ -62,4 +62,11 @@ describe("PolicyVault", () => {
     const { outsider, vault } = await networkHelpers.loadFixture(fixture);
     await viem.assertions.revertWithCustomError(vault.write.executePolicy([], { account: outsider.account }), vault, "Unauthorized");
   });
+
+  it("allows the owner to cancel a policy and prevents future execution", async () => {
+    const { owner, keeper, vault } = await networkHelpers.loadFixture(fixture);
+    await vault.write.cancelPolicy([], { account: owner.account });
+    assert.equal(await vault.read.policyActive(), false);
+    await viem.assertions.revertWithCustomError(vault.write.executePolicy([], { account: keeper.account }), vault, "PolicyInactive");
+  });
 });
