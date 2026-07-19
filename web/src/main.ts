@@ -213,23 +213,9 @@ async function refreshTelegramLink() {
     ruleSummaryTelegramButton.textContent = "Telegram notification";
   }
 }
-let disconnectTelegramArmed = false;
-let disconnectTelegramArmedTimer: number | undefined;
 const disconnectTelegramDefaultLabel = "Disconnect Telegram";
-disconnectTelegramButton.addEventListener("click", async () => {
+async function disconnectTelegram() {
   if (!account) return;
-  if (!disconnectTelegramArmed) {
-    disconnectTelegramArmed = true;
-    disconnectTelegramButton.textContent = "Click again to confirm";
-    window.clearTimeout(disconnectTelegramArmedTimer);
-    disconnectTelegramArmedTimer = window.setTimeout(() => {
-      disconnectTelegramArmed = false;
-      disconnectTelegramButton.textContent = disconnectTelegramDefaultLabel;
-    }, 4_000);
-    return;
-  }
-  disconnectTelegramArmed = false;
-  window.clearTimeout(disconnectTelegramArmedTimer);
   try {
     disconnectTelegramButton.disabled = true;
     disconnectTelegramButton.textContent = "Disconnecting…";
@@ -244,9 +230,28 @@ disconnectTelegramButton.addEventListener("click", async () => {
   } catch (error) {
     demoFaucetStatus.textContent = error instanceof Error ? error.message : "Could not disconnect Telegram.";
     demoFaucetStatus.className = "demo-faucet-status error";
+  } finally {
     disconnectTelegramButton.disabled = !account;
     disconnectTelegramButton.textContent = disconnectTelegramDefaultLabel;
   }
+}
+let disconnectTelegramArmed = false;
+let disconnectTelegramArmedTimer: number | undefined;
+disconnectTelegramButton.addEventListener("click", () => {
+  if (!account) return;
+  if (!disconnectTelegramArmed) {
+    disconnectTelegramArmed = true;
+    disconnectTelegramButton.textContent = "Click again to confirm";
+    window.clearTimeout(disconnectTelegramArmedTimer);
+    disconnectTelegramArmedTimer = window.setTimeout(() => {
+      disconnectTelegramArmed = false;
+      disconnectTelegramButton.textContent = disconnectTelegramDefaultLabel;
+    }, 4_000);
+    return;
+  }
+  disconnectTelegramArmed = false;
+  window.clearTimeout(disconnectTelegramArmedTimer);
+  void disconnectTelegram();
 });
 async function refreshDemoFaucet() {
   fundDemoFaucetButton.hidden = account?.toLowerCase() !== demoTokenOwner.toLowerCase();
@@ -327,11 +332,18 @@ async function startTelegramLink() {
   }
 }
 
-// Both the Connect Telegram button and the topbar bell open the same
-// explanation-and-confirm popover before actually starting the Telegram
-// link flow (real user gesture preserved so the bot popup is not blocked).
+// The Connect Telegram button, the topbar bell, and the rule Summary button
+// share one explanation-and-confirm popover before actually starting (or
+// undoing) the Telegram link (real user gesture preserved so the bot popup
+// is not blocked). Its question and Yes-action switch based on link state.
 const telegramConfirmPopover = document.querySelector<HTMLElement>("#telegram-confirm-popover")!;
-function openTelegramConfirm(trigger: HTMLElement) {
+const telegramConfirmText = document.querySelector<HTMLElement>("#telegram-confirm-text")!;
+let telegramConfirmMode: "connect" | "disconnect" = "connect";
+function openTelegramConfirm(trigger: HTMLElement, mode: "connect" | "disconnect") {
+  telegramConfirmMode = mode;
+  telegramConfirmText.textContent = mode === "disconnect"
+    ? "Your wallet is connected to Telegram notifications. Do you want to disconnect notifications?"
+    : "Do you want to create automatic notifications about rule execution in Telegram?";
   telegramConfirmPopover.hidden = false;
   const rect = trigger.getBoundingClientRect();
   const popoverRect = telegramConfirmPopover.getBoundingClientRect();
@@ -340,18 +352,26 @@ function openTelegramConfirm(trigger: HTMLElement) {
   telegramConfirmPopover.style.left = `${left}px`;
 }
 function closeTelegramConfirm() { telegramConfirmPopover.hidden = true; }
-for (const trigger of [connectTelegramButton, telegramBell, ruleSummaryTelegramButton]) {
+telegramBell.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openTelegramConfirm(telegramBell, telegramLinked ? "disconnect" : "connect");
+});
+for (const trigger of [connectTelegramButton, ruleSummaryTelegramButton]) {
   trigger.addEventListener("click", (event) => {
     event.stopPropagation();
     if (telegramLinked) { window.open(telegramBotChatUrl, "_blank", "noopener"); return; }
-    openTelegramConfirm(trigger);
+    openTelegramConfirm(trigger, "connect");
   });
 }
 telegramConfirmPopover.addEventListener("click", (event) => {
   const target = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-telegram-confirm]");
   if (!target) return;
+  const mode = telegramConfirmMode;
   closeTelegramConfirm();
-  if (target.dataset.telegramConfirm === "yes") void startTelegramLink();
+  if (target.dataset.telegramConfirm === "yes") {
+    if (mode === "disconnect") void disconnectTelegram();
+    else void startTelegramLink();
+  }
 });
 document.addEventListener("click", () => closeTelegramConfirm());
 fundDemoFaucetButton.addEventListener("click", async () => {
