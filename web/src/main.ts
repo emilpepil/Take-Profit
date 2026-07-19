@@ -181,21 +181,25 @@ async function registerExecutorWithKeeper(executor: Address, owner: Address) {
   const payload = await response.json() as { ok?: boolean; error?: string };
   if (!response.ok || !payload.ok) throw new Error(payload.error ?? "Could not connect this executor to the keeper.");
 }
+// The bot's public @username, used to jump straight into the chat once a
+// wallet is already linked (the one-time /telegram/link deep-link is for
+// first-time linking only and expires, so it can't be reused for this).
+const telegramBotChatUrl = "https://t.me/Auto_Take_Profit_Bot";
+let telegramLinked = false;
 async function refreshTelegramLink() {
   connectTelegramButton.disabled = !account;
   telegramBell.disabled = !account;
   ruleSummaryTelegramButton.disabled = !account;
+  telegramLinked = false;
   if (!account) { connectTelegramButton.textContent = "Telegram notification"; ruleSummaryTelegramButton.textContent = "Telegram notification"; return; }
   try {
     const response = await fetch(`${telegramLinkUrl}/status?address=${account}`, { signal: AbortSignal.timeout(5_000) });
     const payload = await response.json() as { linked?: boolean };
     if (!response.ok) throw new Error("Telegram link status is unavailable.");
-    connectTelegramButton.textContent = payload.linked ? "Telegram connected" : "Telegram notification";
-    connectTelegramButton.disabled = Boolean(payload.linked);
-    telegramBell.disabled = Boolean(payload.linked);
-    telegramBell.setAttribute("aria-label", payload.linked ? "Telegram notifications connected" : "Connect Telegram notifications");
-    ruleSummaryTelegramButton.textContent = payload.linked ? "Telegram connected" : "Telegram notification";
-    ruleSummaryTelegramButton.disabled = Boolean(payload.linked);
+    telegramLinked = Boolean(payload.linked);
+    connectTelegramButton.textContent = telegramLinked ? "Telegram connected" : "Telegram notification";
+    telegramBell.setAttribute("aria-label", telegramLinked ? "Open Telegram notifications" : "Connect Telegram notifications");
+    ruleSummaryTelegramButton.textContent = telegramLinked ? "Telegram connected" : "Telegram notification";
   } catch {
     connectTelegramButton.textContent = "Telegram notification";
     ruleSummaryTelegramButton.textContent = "Telegram notification";
@@ -296,6 +300,7 @@ function closeTelegramConfirm() { telegramConfirmPopover.hidden = true; }
 for (const trigger of [connectTelegramButton, telegramBell, ruleSummaryTelegramButton]) {
   trigger.addEventListener("click", (event) => {
     event.stopPropagation();
+    if (telegramLinked) { window.open(telegramBotChatUrl, "_blank", "noopener"); return; }
     openTelegramConfirm(trigger);
   });
 }
