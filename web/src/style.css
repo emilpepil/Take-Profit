@@ -101,7 +101,7 @@
 .rebalancing-hero h3{max-width:600px;margin:6px 0 10px;font-size:30px;letter-spacing:-.045em}.rebalancing-hero>div>p:not(.eyebrow){max-width:570px;margin:0;color:#a6afaa;font:500 14px/1.55 Geist,sans-serif}
 .rebalance-orbit{position:relative;display:grid;flex:0 0 164px;width:164px;height:164px;place-items:center;border:1px solid rgba(186,246,0,.23);border-radius:50%;color:#d5ff2a}.rebalance-orbit i{position:absolute;inset:18px;border:1px solid rgba(186,246,0,.2);border-radius:50%}.rebalance-orbit i:nth-child(2){inset:40px}.rebalance-orbit i:nth-child(3){inset:62px;background:rgba(186,246,0,.08)}.rebalance-orbit b{font:600 27px Geist,sans-serif;letter-spacing:-.06em}
 .rebalance-layout{position:relative;display:grid;grid-template-columns:minmax(310px,.8fr) minmax(0,1.2fr);gap:24px;align-items:start}
-.rebalance-coming-soon{position:absolute;inset:0;z-index:5;display:grid;place-items:center;border-radius:21px;background:rgba(10,11,11,.5);backdrop-filter:blur(18px) saturate(120%);-webkit-backdrop-filter:blur(18px) saturate(120%)}
+.rebalance-coming-soon{position:absolute;inset:0;z-index:5;display:grid;place-items:center;border-radius:21px;background:rgba(10,11,11,.72);backdrop-filter:blur(18px) saturate(120%)}
 .rebalance-coming-soon span{color:#fff;font:700 clamp(28px,4vw,46px) Geist,Inter,sans-serif;letter-spacing:-.03em;text-shadow:0 6px 26px rgba(0,0,0,.55)}
 
 /* Site-styled scrollbar (dark track, lime-on-hover thumb) instead of the
