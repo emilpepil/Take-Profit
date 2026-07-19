@@ -3,29 +3,93 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Take Profit  Monad Testnet</title>
+    <title>Cinch  Monad Testnet</title>
   </head>
   <body>
     <main id="landing-page" class="landing-page" hidden>
-      <header class="landing-nav"><a class="landing-brand" href="/">Take Profit</a><a class="ghost-button" href="/app">Open app</a></header>
+      <header class="landing-nav"><a class="landing-brand" href="/">Cinch</a><a class="ghost-button" href="/app">Open app</a></header>
       <section class="landing-hero">
         <p class="eyebrow">Monad Testnet · Spark Hackathon</p>
         <h1>Automated take-profit, while your tokens stay in your wallet.</h1>
         <p>Create multiple target levels, use slippage protection, and receive confirmed execution updates in Telegram.</p>
-        <div class="landing-actions"><a class="primary-button" href="/app">Launch Take Profit</a><a class="ghost-button" href="https://faucet.monad.xyz/" target="_blank" rel="noreferrer">Get Testnet MON ↗</a></div>
+        <div class="landing-actions"><a class="primary-button" href="/app">Launch Cinch</a><a class="ghost-button" href="https://faucet.monad.xyz/" target="_blank" rel="noreferrer">Get Testnet MON ↗</a></div>
       </section>
-      <section class="landing-features" aria-label="Product features">
-        <article><strong>Multi-level exits</strong><span>Create independent take-profit rules for each asset.</span></article>
-        <article><strong>Autonomous keeper</strong><span>Checks targets every 10 seconds and settles eligible rules.</span></article>
-        <article><strong>Transparent results</strong><span>See execution history and receive Telegram notifications.</span></article>
+
+      <section class="landing-section landing-steps-section" aria-labelledby="how-it-works-title">
+        <p class="eyebrow">How it works</p>
+        <h2 id="how-it-works-title">Set a target once. Cinch handles the rest.</h2>
+        <ol class="landing-steps">
+          <li><span>1</span><div><strong>Connect &amp; claim</strong><p>Connect MetaMask on Monad Testnet, claim a demo bundle of USDm and test tokens.</p></div></li>
+          <li><span>2</span><div><strong>Set your target</strong><p>Create one or more take-profit rules per asset, with slippage protection.</p></div></li>
+          <li><span>3</span><div><strong>Keeper watches the price</strong><p>A server-side keeper checks the price every 10 seconds — you don't have to.</p></div></li>
+          <li><span>4</span><div><strong>Get paid automatically</strong><p>When the target is hit, the keeper executes the sale and USDm lands back in your wallet, with a Telegram confirmation.</p></div></li>
+        </ol>
       </section>
+
+      <section class="landing-section landing-safety" aria-labelledby="safety-title">
+        <p class="eyebrow">Why it's safe</p>
+        <h2 id="safety-title">Your keys, your tokens, always.</h2>
+        <div class="landing-safety-grid">
+          <article><strong>Tokens never leave your wallet</strong><span>Until a rule executes, everything stays in MetaMask.</span></article>
+          <article><strong>Limited, per-rule allowance</strong><span>The executor contract can only spend exactly what your active rules allow.</span></article>
+          <article><strong>Fully on Monad Testnet</strong><span>A safe environment to test automated strategies with zero real risk.</span></article>
+        </div>
+      </section>
+
+      <section class="landing-section" aria-labelledby="features-title">
+        <p class="eyebrow">Built for hands-off exits</p>
+        <h2 id="features-title">Everything a take-profit strategy needs.</h2>
+        <div class="landing-features" aria-label="Product features">
+          <article><strong>Multi-level exits</strong><span>Create independent take-profit rules for each asset.</span></article>
+          <article><strong>Autonomous keeper</strong><span>Checks targets every 10 seconds and settles eligible rules.</span></article>
+          <article><strong>Transparent results</strong><span>See execution history and receive Telegram notifications.</span></article>
+          <article><strong>Portfolio at a glance</strong><span>Track balances, 24h price change, and active rules in one dashboard.</span></article>
+        </div>
+      </section>
+
+      <section class="landing-section landing-preview" aria-labelledby="preview-title">
+        <p class="eyebrow">See it in action</p>
+        <h2 id="preview-title">A dashboard built for one thing: your exit.</h2>
+        <div class="landing-preview-frame" aria-hidden="true">
+          <div class="landing-preview-cards">
+            <div class="landing-preview-card"><span>Total value</span><strong>61,421.93</strong></div>
+            <div class="landing-preview-card landing-preview-card-positive"><span>24h change</span><strong>+2.41%</strong></div>
+            <div class="landing-preview-card"><span>Active rules</span><strong>3</strong></div>
+          </div>
+          <div class="landing-preview-rows">
+            <div><i></i><b>JAMES</b><small>27.38 USDm</small><em class="up">+12.5%</em></div>
+            <div><i></i><b>EMO</b><small>12.14 USDm</small><em class="down">-2.1%</em></div>
+            <div><i></i><b>CHOG</b><small>12.70 USDm</small><em class="up">+5.2%</em></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section landing-faq" aria-labelledby="faq-title">
+        <p class="eyebrow">FAQ</p>
+        <h2 id="faq-title">Common questions</h2>
+        <div class="landing-faq-grid">
+          <article><strong>Is this real money?</strong><span>No — Monad Testnet only, demo tokens.</span></article>
+          <article><strong>Do I need to keep the app open?</strong><span>No — the keeper runs server-side.</span></article>
+          <article><strong>Can I cancel a rule?</strong><span>Yes, anytime, before it executes.</span></article>
+        </div>
+      </section>
+
+      <section class="landing-cta">
+        <h2>Ready to automate your first exit?</h2>
+        <a class="primary-button" href="/app">Launch Cinch</a>
+      </section>
+
+      <footer class="landing-footer">
+        <span>Cinch · Testnet demo, not financial advice.</span>
+        <div><a href="#status">Documentation</a><a href="#status">Support</a></div>
+      </footer>
     </main>
     <div id="app-shell" class="app-shell">
       <aside class="sidebar">
-        <div class="brand"><span class="brand-mark">M</span><span><strong>Monad</strong><small>Testnet Active</small></span></div>
+        <div class="brand brand-wordmark"><strong>Cinch</strong></div>
         <nav class="nav" aria-label="Primary navigation">
-          <button class="nav-item active" type="button" data-tab="portfolio"> <span>Portfolio</span></button>
-          <button class="nav-item" type="button" data-tab="take-profit"> <span>Take Profit</span></button>
+          <button class="nav-item active" type="button" data-tab="portfolio"><i class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg></i><span>Portfolio</span></button>
+          <button class="nav-item" type="button" data-tab="take-profit"><i class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15 9.5 8.5 13.5 12.5 21 5"/><path d="M15 5h6v6"/><path d="M3 20h18"/></svg></i><span>Take Profit</span></button>
           <button class="nav-item" type="button" data-tab="rebalancing"> <span>Rebalancing</span></button>
         </nav>
         <section class="sidebar-demo-guide" aria-labelledby="demo-guide-title">
@@ -42,30 +106,41 @@
 
       <main class="workspace">
         <header class="topbar">
-          <h1>Take Profit</h1>
-          <div class="topbar-actions"><span class="network-pill"><i></i> Monad Testnet</span><button id="connect" class="primary-button">Connect wallet</button></div>
+          <div class="topbar-actions"><span class="network-pill"><i></i> Monad Testnet</span><button id="connect" class="primary-button">Connect wallet</button><button id="telegram-bell" class="icon-button" type="button" aria-label="Connect Telegram notifications" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button></div>
         </header>
+        <div id="telegram-confirm-popover" class="asset-popover telegram-confirm-popover" role="dialog" aria-label="Connect Telegram notifications" hidden>
+          <p>Do you want to create automatic notifications about rule execution in Telegram?</p>
+          <div class="telegram-confirm-actions"><button type="button" data-telegram-confirm="yes">Yes</button><button type="button" data-telegram-confirm="no">No</button></div>
+        </div>
 
         <section id="portfolio-panel" class="tab-panel active">
-          <div class="page-heading"><div><p class="eyebrow">Portfolio overview</p><h2>Your assets</h2></div><button class="ghost-button" type="button" data-tab="take-profit">Create rule</button></div>
+          <div class="page-heading"><div><p class="eyebrow">Overview</p><h2>Portfolio</h2></div></div>
           <div class="metric-grid">
-            <article class="metric-card"><span>Total value</span><strong id="portfolio-total-value">--</strong><small>USDm across tracked test assets</small></article>
-            <article id="portfolio-change-card" class="metric-card positive"><span>24h change</span><strong id="portfolio-24h-change">--</strong><small id="portfolio-change-note">Building live price history</small></article>
-            <article class="metric-card"><span>Active rules</span><strong id="portfolio-active-rules">0</strong><button id="view-all-rules" class="text-button" type="button">View all</button></article>
+            <article id="portfolio-total-card" class="metric-card metric-total-card positive"><span>Total value</span><strong id="portfolio-total-value">--</strong><small>USDm across tracked test assets</small><span class="portfolio-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 7.5h14a3 3 0 0 1 3 3v7a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M3.5 7.5V6a2 2 0 0 1 2-2h11"/><path d="M16.5 13.5h3"/></svg></span><span id="portfolio-total-chart" class="portfolio-chart portfolio-sparkline" aria-hidden="true"><svg viewBox="0 0 260 54" preserveAspectRatio="none"><path d="M2 43 C16 35, 23 31, 36 37 S57 48, 70 35 S92 25, 107 33 S127 43, 141 26 S164 22, 178 13 S198 10, 212 25 S234 41, 258 12"/></svg></span></article>
+            <article id="portfolio-change-card" class="metric-card metric-change-card positive"><span>24h change</span><strong id="portfolio-24h-change">--</strong><small id="portfolio-change-note">Building live price history</small><span class="portfolio-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 16 5-5 3.5 3.5L20 7"/><path d="M15 7h5v5"/></svg></span><span id="portfolio-change-chart" class="portfolio-chart portfolio-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></article>
+            <article id="portfolio-rules-card" class="metric-card"><span>Active rules</span><strong id="portfolio-active-rules">0</strong><button id="view-all-rules" class="text-button" type="button">View all</button><span class="portfolio-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h9.5L19 7v13.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/><path d="M15 3.5V7h4"/><path d="M8.5 11.5h7"/><path d="M8.5 15h5"/></svg></span></article>
           </div>
-          <section class="surface portfolio-table"><div class="section-title"><div><h3>Your assets</h3><p>Price, balance and available actions</p></div><span class="filter"> Filter</span></div><div class="table-head"><span>Asset</span><span>Price / 24h</span><span>Holdings</span><span>Action</span></div><div id="asset-rows" class="asset-rows"></div></section>
-          <section class="surface demo-faucet-panel"><div class="section-title"><div><p class="eyebrow">Demo onboarding</p><h3>Demo Faucet</h3><p>Claim a small test bundle once every 4 hours. MON is available only from the official Monad Faucet.</p></div><a class="ghost-button" href="https://faucet.monad.xyz/" target="_blank" rel="noreferrer">Get Testnet MON ↗</a></div><div class="demo-faucet-actions"><div><strong>Bundle</strong><span>10,000 USDm · 100 JAMES · 100 EMO · 100 CHOG</span></div><button id="claim-demo-faucet" class="primary-button" type="button" disabled>Connect wallet to claim</button></div><div class="demo-faucet-tools"><button id="add-demo-tokens" class="ghost-button" type="button" disabled>Add demo tokens to MetaMask</button><button id="fund-demo-faucet" class="ghost-button faucet-owner-action" type="button" hidden>Fund 1,000 demo bundles</button></div><p id="demo-faucet-status" class="demo-faucet-status">Connect MetaMask to claim demo tokens.</p></section>
-          <section class="surface market-panel"><div class="section-title"><div><h3>Demo market controls</h3><p>Move prices to test policy thresholds.</p></div><span class="status-pill">Testnet</span></div><div id="trade-panel" class="trade-panel"><div class="trade-field"><div class="trade-label"><span>Sell</span><small id="sell-balance">0 USDm</small></div><input id="market-amount" value="0" inputmode="decimal" aria-label="Amount to swap"/><select id="market-sell-token" aria-label="Sell token"><option value="USDm">USDm</option><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select></div><button id="market-switch" class="swap-switch" type="button" aria-label="Swap asset direction">&darr;</button><div class="trade-field"><div class="trade-label"><span>Buy</span><small id="buy-balance">0 JAMES</small></div><output id="market-output">0</output><select id="market-buy-token" aria-label="Buy token"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option><option value="USDm">USDm</option></select></div><p id="market-quote" class="trade-quote">Enter an amount to calculate the quote.</p><button id="market-swap" class="trade-submit" type="button" disabled>Connect wallet to swap</button></div><div id="swaps" class="legacy-controls"></div></section>
+          <section class="surface portfolio-table"><div class="section-title"><div><h3>Your assets</h3><p>Price, balance and available actions</p></div><div class="asset-table-tools"><label class="asset-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="asset-search" type="search" placeholder="Search assets…" aria-label="Search assets"/></label><div class="asset-tool-menu"><button id="asset-sort-toggle" class="icon-button" type="button" aria-label="Sort assets" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></button><div id="asset-sort-menu" class="asset-popover" role="menu" hidden><button type="button" data-sort="value-desc">Value: high to low</button><button type="button" data-sort="value-asc">Value: low to high</button><button type="button" data-sort="change-desc">24h change: biggest gain</button><button type="button" data-sort="change-asc">24h change: biggest drop</button><button type="button" data-sort="none">Default order</button></div></div><div class="asset-tool-menu"><button id="asset-visibility-toggle" class="icon-button" type="button" aria-label="Show or hide assets" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="15" cy="8" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="16" r="2" fill="currentColor" stroke="none"/></svg></button><div id="asset-visibility-menu" class="asset-popover" role="menu" hidden></div></div></div></div><div class="table-head"><span>Asset</span><span>Price / 24h</span><span>Holdings</span><span>Value</span><span>Action</span></div><div id="asset-rows" class="asset-rows"></div></section>
+          <section id="demo-faucet-panel" class="surface demo-faucet-panel"><div class="section-title"><div><p class="eyebrow">Demo onboarding</p><h3>Demo Faucet</h3><p>Claim a small test bundle once every 4 hours. MON is available only from the official Monad Faucet.</p></div><a class="ghost-button demo-faucet-badge" href="https://faucet.monad.xyz/" target="_blank" rel="noreferrer">Get tMON ↗</a></div><div class="demo-faucet-actions"><div><strong>Bundle</strong><span>10,000 USDm · 100 JAMES · 100 EMO · 100 CHOG</span></div><button id="claim-demo-faucet" class="primary-button" type="button" disabled>Connect wallet to claim</button></div><div class="demo-faucet-tools"><button id="add-demo-tokens" class="ghost-button" type="button" disabled>Add demo tokens to MetaMask</button><button id="fund-demo-faucet" class="ghost-button faucet-owner-action" type="button" hidden>Fund 1,000 demo bundles</button></div><p id="demo-faucet-status" class="demo-faucet-status">Connect MetaMask to claim demo tokens.</p></section>
+          <section class="surface market-panel"><div class="section-title"><div><h3>Swap</h3><p>Move prices to test policy thresholds.</p></div><span class="status-pill">Testnet</span></div><div id="trade-panel" class="trade-panel"><div class="trade-field"><div class="trade-label"><span>Sell</span><small id="sell-balance">0 USDm</small></div><input id="market-amount" value="0" inputmode="decimal" aria-label="Amount to swap"/><select id="market-sell-token" aria-label="Sell token"><option value="USDm">USDm</option><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select></div><button id="market-switch" class="swap-switch" type="button" aria-label="Swap asset direction"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21V3"/><path d="M4 7l4-4 4 4"/><path d="M16 3v18"/><path d="M12 17l4 4 4-4"/></svg></button><div class="trade-field"><div class="trade-label"><span>Buy</span><small id="buy-balance">0 JAMES</small></div><output id="market-output">0</output><select id="market-buy-token" aria-label="Buy token"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option><option value="USDm">USDm</option></select></div><p id="market-quote" class="trade-quote">Enter an amount to calculate the quote.</p><button id="market-swap" class="trade-submit" type="button" disabled>Connect wallet to swap</button></div><div id="swaps" class="legacy-controls"></div></section>
         </section>
 
         <section id="take-profit-panel" class="tab-panel">
-          <div class="page-heading"><div><p class="eyebrow">Automated exits</p><h2>Take-profit rules</h2></div><span class="status-pill live"><i></i> Policies ready</span></div>
+          <div class="page-heading"><div><p class="eyebrow">Automated exits</p><h2>Take-profit rules</h2><p class="tab-description">Lock in profit automatically at your target price. Tokens stay in MetaMask; the keeper sells only when triggered, and USDm lands in your wallet.</p></div><span class="status-pill live"><i></i> Policies ready</span></div>
           <section class="surface smart-account-panel eoa-automation-panel"><div class="section-title"><div><p class="eyebrow">Your wallet</p><h3>Quick automation</h3><p>Your tokens stay in MetaMask. When you create the first rule, Take Profit prepares the executor, exact approval and rule automatically.</p></div><span id="eoa-state" class="status-pill">Not connected</span></div><p id="executor-status">Choose an asset and rule parameters below, then create the rule.</p><select id="executor-asset" class="legacy-controls" aria-label="Executor asset"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select><button id="deploy-eoa-executor" class="legacy-controls" type="button"></button></section>
           <section class="surface smart-account-panel legacy-controls"><span id="safe-state"></span><input id="safe-address"/><button id="use-safe" type="button"></button><p id="safe-status"></p><select id="module-asset"><option value="JAMES">JAMES</option></select><button id="deploy-safe-module" type="button"></button><p id="module-status"></p></section>
-          <section class="rule-builder"><div class="rule-config surface"><div class="section-title"><div><p class="eyebrow"> Configuration</p><h3>Create rule</h3></div></div><label>Select asset<select id="rule-asset"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select><small id="rule-available">Connect wallet to load Safe balance</small></label><div class="rule-input-grid"><div class="price-inputs"><label>Current price<input id="rule-current-price" value="" readonly/></label><label>Target price<input id="rule-take" type="text" value="" inputmode="decimal" disabled/></label></div><div class="manual-inputs"><label>Target growth (%)<input id="growth-input" type="text" value="100" inputmode="decimal"/></label><label>Amount to sell<input id="sell-input" type="text" value="0" inputmode="decimal" disabled/></label></div></div><div class="range-row"><span>Target growth</span><strong id="growth-value">+100%</strong></div><input id="growth-range" type="range" min="-90" max="500" value="100"/><div class="range-scale"><span>-90%</span><span>+205%</span><span>+500%</span></div><div class="range-row"><span>Amount to sell</span><strong id="share-value">25%</strong></div><input id="rule-share" type="range" min="1" max="100" value="25"/><div class="range-scale"><span>1%</span><span>50%</span><span>100%</span></div><div class="sell-amount"><span>Sell amount</span><strong id="sell-amount"></strong></div></div><aside class="rule-summary surface"><h3>Summary</h3><dl><div><dt>Action</dt><dd class="sell-text">Sell</dd></div><div><dt>Asset</dt><dd id="summary-asset"></dd></div><div><dt>Current price</dt><dd id="summary-current-price"></dd></div><div><dt>Target price</dt><dd id="summary-price"></dd></div></dl><div class="estimated"><span>Estimated profit</span><strong id="summary-return"></strong></div><p>Sell <b id="summary-sentence"></b></p><button id="create-rule" class="primary-button" type="button" disabled>Create Safe rule</button><small> Safe owner confirmation required</small></aside></section><section class="surface existing-rules"><div class="section-title"><div><h3>Existing Rules</h3><p>Rules configured for your Smart Account.</p><p id="keeper-live-status" class="keeper-live-status">Checking keeper status…</p></div><button id="refresh-rules" class="ghost-button" type="button">Refresh</button></div><div class="rules-head"><span>Asset</span><span>Condition</span><span>Action</span><span>Status</span><span></span></div><div id="existing-rules-body"></div></section><div id="vaults" class="legacy-controls"></div><div id="funding" class="legacy-controls"></div><div id="execution" class="legacy-controls"></div><div id="keepers" class="legacy-controls"></div><div id="ownership" class="legacy-controls"></div><input id="keeper-address" class="legacy-controls" value="0xD88394629BbE7Be91B1eFE6E984e7aCb118edd8B" />
+          <section class="rule-builder"><div class="rule-config surface"><div class="section-title"><div><p class="eyebrow"> Configuration</p><h3>Create rule</h3></div></div><label>Select asset<select id="rule-asset"><option value="JAMES">JAMES</option><option value="EMO">EMO</option><option value="CHOG">CHOG</option></select><small id="rule-available">Connect wallet to load Safe balance</small></label><div class="rule-input-grid"><div class="price-inputs"><label>Current price<input id="rule-current-price" value="" readonly/></label><label>Target price<input id="rule-take" type="text" value="" inputmode="decimal" disabled/></label></div><div class="manual-inputs"><label>Target growth (%)<input id="growth-input" type="text" value="100" inputmode="decimal"/></label><label>Amount to sell<input id="sell-input" type="text" value="0" inputmode="decimal" disabled/></label></div></div><div class="range-row"><span>Target growth</span><strong id="growth-value">+100%</strong></div><input id="growth-range" type="range" min="-90" max="500" value="100"/><div class="range-scale"><span>-90%</span><span>+205%</span><span>+500%</span></div><div class="range-row"><span>Amount to sell</span><strong id="share-value">25%</strong></div><input id="rule-share" type="range" min="1" max="100" value="25"/><div class="range-scale"><span>1%</span><span>50%</span><span>100%</span></div><div class="sell-amount"><span>Sell amount</span><strong id="sell-amount"></strong></div></div><aside class="rule-summary surface"><h3>Summary</h3><dl><div><dt>Action</dt><dd class="sell-text">Sell</dd></div><div><dt>Asset</dt><dd id="summary-asset"></dd></div><div><dt>Current price</dt><dd id="summary-current-price"></dd></div><div><dt>Target price</dt><dd id="summary-price"></dd></div></dl><div class="estimated"><span>Estimated profit</span><strong id="summary-return"></strong></div><p>Sell <b id="summary-sentence"></b></p><button id="create-rule" class="primary-button" type="button" disabled>Create Safe rule</button><small> Safe owner confirmation required</small><button id="rule-summary-telegram" class="ghost-button" type="button" disabled>Telegram notification</button></aside></section><section class="surface existing-rules"><div class="section-title"><div><h3>Existing Rules</h3><p>Rules configured for your Smart Account.</p><p id="keeper-live-status" class="keeper-live-status">Checking keeper status…</p></div><button id="refresh-rules" class="ghost-button" type="button">Refresh</button></div><div class="rules-head"><span>Asset</span><span>Condition</span><span>Action</span><span>Status</span><span></span></div><div id="existing-rules-body"></div></section><div id="vaults" class="legacy-controls"></div><div id="funding" class="legacy-controls"></div><div id="execution" class="legacy-controls"></div><div id="keepers" class="legacy-controls"></div><div id="ownership" class="legacy-controls"></div><input id="keeper-address" class="legacy-controls" value="0xD88394629BbE7Be91B1eFE6E984e7aCb118edd8B" />
         </section>
 
-        <section id="rebalancing-panel" class="tab-panel"><div class="coming-soon surface"><span class="coming-icon"></span><p class="eyebrow">Portfolio automation</p><h2>Auto-Rebalancing</h2><p>Maintain your target allocations automatically across supported assets. Existing price-band policies remain available in Take Profit.</p><span class="status-pill">Coming soon</span></div></section>
+        <section id="rebalancing-panel" class="tab-panel">
+          <div class="page-heading"><div><p class="eyebrow">Portfolio automation</p><h2>Auto-Rebalancing</h2><p class="tab-description">Set your target allocation, review the current portfolio mix, and prepare a rebalance plan.</p></div><span class="status-pill">Preview mode</span></div>
+          <section class="rebalancing-hero surface"><div><p class="eyebrow">Allocation overview</p><h3>Keep your portfolio in balance</h3><p>Current wallet balances are used to calculate a transparent rebalance preview. No swap is submitted from this screen.</p></div><div class="rebalance-orbit" aria-hidden="true"><i></i><i></i><i></i><b>100%</b></div></section>
+          <div class="rebalance-layout">
+            <div class="rebalance-coming-soon" aria-hidden="true"><span>Coming soon</span></div>
+            <section class="surface allocation-panel"><div class="section-title"><div><h3>Target allocation</h3><p>Adjust targets. The total must equal 100%.</p></div><button id="reset-rebalance-targets" class="ghost-button" type="button">Reset</button></div><div class="allocation-grid"><label>JAMES <input id="rebalance-james" type="number" min="0" max="100" value="40" inputmode="decimal"/><span>%</span></label><label>EMO <input id="rebalance-emo" type="number" min="0" max="100" value="30" inputmode="decimal"/><span>%</span></label><label>CHOG <input id="rebalance-chog" type="number" min="0" max="100" value="20" inputmode="decimal"/><span>%</span></label><label>USDm <input id="rebalance-usdm" type="number" min="0" max="100" value="10" inputmode="decimal"/><span>%</span></label></div><div class="rebalance-total"><span>Total target</span><strong id="rebalance-total">100%</strong></div><button id="preview-rebalance" class="primary-button" type="button">Preview rebalance</button><p id="rebalance-status" class="rebalance-status">Connect a wallet to build a rebalance preview.</p></section>
+            <section class="surface rebalance-plan"><div class="section-title"><div><h3>Rebalance plan</h3><p>Live allocation from the connected wallet.</p></div><span class="status-pill">Testnet</span></div><div class="rebalance-head"><span>Asset</span><span>Current</span><span>Target</span><span>Difference</span></div><div id="rebalance-rows" class="rebalance-rows"><p class="empty-rebalance">Connect a wallet to load allocation data.</p></div></section>
+          </div>
+        </section>
         <p id="status" role="status" aria-live="polite">Connect a wallet to load live policy status.</p>
       </main>
     </div>
@@ -93,6 +168,66 @@
           <li><span>7</span><div><strong>Confirm profit</strong><small>The keeper executes eligible rules, USDm returns to MetaMask, and the result appears in Execution history and Telegram.</small></div></li>
         </ol>
       </section>
+    </div>
+
+    <div id="portfolio-v2-page" class="v2-shell" hidden>
+      <aside class="v2-sidebar">
+        <div class="v2-brand"><span class="v2-brand-mark"><svg viewBox="0 0 182 184" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M90.5358 0C64.3911 0 0 65.2598 0 91.7593C0 118.259 64.3911 183.52 90.5358 183.52C116.681 183.52 181.073 118.258 181.073 91.7593C181.073 65.2609 116.682 0 90.5358 0ZM76.4273 144.23C65.4024 141.185 35.7608 88.634 38.7655 77.4599C41.7703 66.2854 93.62 36.2439 104.645 39.2892C115.67 42.3341 145.312 94.8846 142.307 106.059C139.302 117.234 87.4522 147.276 76.4273 144.23Z" fill="#BAF600"/></svg></span><span><strong>Monad</strong><small>Testnet Active</small></span></div>
+        <p class="v2-nav-label">Portfolio</p>
+        <nav class="v2-nav" aria-label="Primary navigation">
+          <a class="v2-nav-item active" href="/app/1"><i class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg></i>Portfolio</a>
+          <a class="v2-nav-item" href="/app"><i class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15 9.5 8.5 13.5 12.5 21 5"/><path d="M15 5h6v6"/><path d="M3 20h18"/></svg></i>Take Profit</a>
+          <a class="v2-nav-item" href="/app">Rebalancing</a>
+        </nav>
+        <p class="v2-nav-label">Tools</p>
+        <nav class="v2-nav">
+          <a class="v2-nav-item" href="/app">Create Rule</a>
+        </nav>
+        <p class="v2-nav-label">Resources</p>
+        <nav class="v2-nav">
+          <a class="v2-nav-item" href="#status">Documentation</a>
+          <a class="v2-nav-item" href="#status">Support</a>
+        </nav>
+        <div class="v2-sidebar-bottom">
+          <p class="v2-eyebrow">Get Started</p>
+          <a class="v2-create-rule-button" href="/app">Create New Rule</a>
+        </div>
+      </aside>
+
+      <main class="v2-main">
+        <header class="v2-topbar">
+          <span class="v2-network-pill"><i></i> Monad Testnet</span>
+          <div id="v2-wallet-slot" class="v2-wallet-slot"></div>
+        </header>
+
+        <p class="v2-eyebrow">Portfolio</p>
+        <h1 class="v2-heading">Your assets</h1>
+        <p class="v2-subheading">Track, manage, and grow your on-chain portfolio</p>
+
+        <div class="v2-layout">
+          <div class="v2-primary">
+            <div id="v2-metrics-slot" class="v2-metrics"></div>
+
+            <section class="v2-card v2-table-card">
+              <div class="v2-table-header">
+                <h2>Your assets</h2>
+                <div class="v2-table-tools"><input id="v2-asset-search" type="search" placeholder="Search assets…" aria-label="Search assets"/></div>
+              </div>
+              <div class="v2-table-head"><span>Asset</span><span>Price / 24h</span><span>Holdings</span><span>Value</span><span>Action</span></div>
+              <div id="v2-table-body-slot"></div>
+              <p id="v2-asset-count" class="v2-asset-count">Showing 0 of 0 assets</p>
+            </section>
+          </div>
+
+          <div class="v2-secondary">
+            <section class="v2-card v2-swap-card">
+              <h2>Swap</h2>
+              <div id="v2-swap-slot"></div>
+            </section>
+            <div id="v2-onboarding-slot"></div>
+          </div>
+        </div>
+      </main>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -12,11 +12,29 @@ import "./market-controls.css";
 // product dashboard on the explicit app route, leaving `/` for the public
 // landing page and hackathon introduction.
 const isAppRoute = window.location.pathname === "/app" || window.location.pathname.startsWith("/app/");
+const isPortfolioV2Route = window.location.pathname === "/app/1" || window.location.pathname.startsWith("/app/1/");
 const landingPage = document.querySelector<HTMLElement>("#landing-page")!;
 const appShell = document.querySelector<HTMLElement>("#app-shell")!;
+const portfolioV2Page = document.querySelector<HTMLElement>("#portfolio-v2-page")!;
 landingPage.hidden = isAppRoute;
-appShell.hidden = !isAppRoute;
-document.title = isAppRoute ? "Take Profit · Monad Testnet" : "Take Profit · Automated exits on Monad";
+appShell.hidden = !isAppRoute || isPortfolioV2Route;
+portfolioV2Page.hidden = !isPortfolioV2Route;
+document.title = isPortfolioV2Route ? "Portfolio · Cinch" : isAppRoute ? "Cinch · Monad Testnet" : "Cinch · Automated exits on Monad";
+
+// The `/app/1` route reuses the exact same wallet, balance, price and swap
+// logic as `/app` — it only moves the real DOM nodes into a new layout so
+// nothing about the underlying blockchain behavior is duplicated or forked.
+if (isPortfolioV2Route) {
+  document.querySelector("#v2-wallet-slot")!.appendChild(document.querySelector("#connect")!);
+  document.querySelector("#v2-metrics-slot")!.append(
+    document.querySelector("#portfolio-total-card")!,
+    document.querySelector("#portfolio-change-card")!,
+    document.querySelector("#portfolio-rules-card")!,
+  );
+  document.querySelector("#v2-table-body-slot")!.appendChild(document.querySelector("#asset-rows")!);
+  document.querySelector("#v2-swap-slot")!.appendChild(document.querySelector("#trade-panel")!);
+  document.querySelector("#v2-onboarding-slot")!.appendChild(document.querySelector("#demo-faucet-panel")!);
+}
 
 declare global { interface Window { ethereum?: { request(args: { method: string; params?: unknown }): Promise<unknown> } } }
 
@@ -89,8 +107,10 @@ const demoFaucetUrl = import.meta.env.VITE_DEMO_FAUCET_URL ?? keeperHealthUrl.re
 const telegramLinkUrl = import.meta.env.VITE_TELEGRAM_LINK_URL ?? keeperHealthUrl.replace(/\/health$/, "/telegram");
 const demoFaucetButton = document.querySelector<HTMLButtonElement>("#claim-demo-faucet")!;
 const addDemoTokensButton = document.querySelector<HTMLButtonElement>("#add-demo-tokens")!;
-document.querySelector<HTMLElement>(".demo-faucet-tools")!.insertAdjacentHTML("beforeend", '<button id="connect-telegram" class="ghost-button" type="button" disabled>Connect Telegram</button>');
+document.querySelector<HTMLElement>(".demo-faucet-tools")!.insertAdjacentHTML("beforeend", '<button id="connect-telegram" class="ghost-button" type="button" disabled>Telegram notification</button>');
 const connectTelegramButton = document.querySelector<HTMLButtonElement>("#connect-telegram")!;
+const telegramBell = document.querySelector<HTMLButtonElement>("#telegram-bell")!;
+const ruleSummaryTelegramButton = document.querySelector<HTMLButtonElement>("#rule-summary-telegram")!;
 const fundDemoFaucetButton = document.querySelector<HTMLButtonElement>("#fund-demo-faucet")!;
 const demoFaucetStatus = document.querySelector<HTMLParagraphElement>("#demo-faucet-status")!;
 function faucetMessage(address: Address) {
@@ -114,15 +134,22 @@ async function registerExecutorWithKeeper(executor: Address, owner: Address) {
 }
 async function refreshTelegramLink() {
   connectTelegramButton.disabled = !account;
-  if (!account) { connectTelegramButton.textContent = "Connect Telegram"; return; }
+  telegramBell.disabled = !account;
+  ruleSummaryTelegramButton.disabled = !account;
+  if (!account) { connectTelegramButton.textContent = "Telegram notification"; ruleSummaryTelegramButton.textContent = "Telegram notification"; return; }
   try {
     const response = await fetch(`${telegramLinkUrl}/status?address=${account}`, { signal: AbortSignal.timeout(5_000) });
     const payload = await response.json() as { linked?: boolean };
     if (!response.ok) throw new Error("Telegram link status is unavailable.");
-    connectTelegramButton.textContent = payload.linked ? "Telegram connected" : "Connect Telegram";
+    connectTelegramButton.textContent = payload.linked ? "Telegram connected" : "Telegram notification";
     connectTelegramButton.disabled = Boolean(payload.linked);
+    telegramBell.disabled = Boolean(payload.linked);
+    telegramBell.setAttribute("aria-label", payload.linked ? "Telegram notifications connected" : "Connect Telegram notifications");
+    ruleSummaryTelegramButton.textContent = payload.linked ? "Telegram connected" : "Telegram notification";
+    ruleSummaryTelegramButton.disabled = Boolean(payload.linked);
   } catch {
-    connectTelegramButton.textContent = "Connect Telegram";
+    connectTelegramButton.textContent = "Telegram notification";
+    ruleSummaryTelegramButton.textContent = "Telegram notification";
   }
 }
 async function refreshDemoFaucet() {
@@ -170,7 +197,7 @@ addDemoTokensButton.addEventListener("click", async () => {
     addDemoTokensButton.textContent = "Add demo tokens to MetaMask";
   }
 });
-connectTelegramButton.addEventListener("click", async () => {
+async function startTelegramLink() {
   let botWindow: Window | null = null;
   try {
     if (!account) throw new Error("Connect MetaMask first.");
@@ -178,7 +205,10 @@ connectTelegramButton.addEventListener("click", async () => {
     // the bot from opening after MetaMask resolves the signature request.
     botWindow = window.open("", "_blank");
     connectTelegramButton.disabled = true;
+    telegramBell.disabled = true;
+    ruleSummaryTelegramButton.disabled = true;
     connectTelegramButton.textContent = "Confirm in MetaMask...";
+    ruleSummaryTelegramButton.textContent = "Confirm in MetaMask...";
     const message = telegramLinkMessage(account);
     const signature = await wallet().signMessage({ message });
     const response = await fetch(`${telegramLinkUrl}/link`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message, signature }), signal: AbortSignal.timeout(15_000) });
@@ -191,6 +221,7 @@ connectTelegramButton.addEventListener("click", async () => {
     demoFaucetStatus.textContent = "Telegram opened. Press Start in the bot within 10 minutes to finish linking this wallet.";
     demoFaucetStatus.className = "demo-faucet-status ready";
     connectTelegramButton.textContent = "Waiting for Telegram...";
+    ruleSummaryTelegramButton.textContent = "Waiting for Telegram...";
     window.setTimeout(() => void refreshTelegramLink(), 5_000);
   } catch (error) {
     botWindow?.close();
@@ -198,7 +229,34 @@ connectTelegramButton.addEventListener("click", async () => {
     demoFaucetStatus.className = "demo-faucet-status error";
     await refreshTelegramLink();
   }
+}
+
+// Both the Connect Telegram button and the topbar bell open the same
+// explanation-and-confirm popover before actually starting the Telegram
+// link flow (real user gesture preserved so the bot popup is not blocked).
+const telegramConfirmPopover = document.querySelector<HTMLElement>("#telegram-confirm-popover")!;
+function openTelegramConfirm(trigger: HTMLElement) {
+  telegramConfirmPopover.hidden = false;
+  const rect = trigger.getBoundingClientRect();
+  const popoverRect = telegramConfirmPopover.getBoundingClientRect();
+  const left = Math.max(12, Math.min(rect.right - popoverRect.width, window.innerWidth - popoverRect.width - 12));
+  telegramConfirmPopover.style.top = `${rect.bottom + 8}px`;
+  telegramConfirmPopover.style.left = `${left}px`;
+}
+function closeTelegramConfirm() { telegramConfirmPopover.hidden = true; }
+for (const trigger of [connectTelegramButton, telegramBell, ruleSummaryTelegramButton]) {
+  trigger.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openTelegramConfirm(trigger);
+  });
+}
+telegramConfirmPopover.addEventListener("click", (event) => {
+  const target = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-telegram-confirm]");
+  if (!target) return;
+  closeTelegramConfirm();
+  if (target.dataset.telegramConfirm === "yes") void startTelegramLink();
 });
+document.addEventListener("click", () => closeTelegramConfirm());
 fundDemoFaucetButton.addEventListener("click", async () => {
   try {
     if (!account || account.toLowerCase() !== demoTokenOwner.toLowerCase()) throw new Error("Only the demo-token owner can fund the faucet.");
@@ -395,6 +453,7 @@ document.querySelector<HTMLButtonElement>("#disconnect-wallet")!.addEventListene
   renderSafeAccount();
   renderEoaAutomation();
   renderAssetRows();
+  renderRebalancePlan();
   updatePortfolioMetrics();
   portfolioActiveRules.textContent = "0";
   updateRuleSummary("asset");
@@ -528,8 +587,11 @@ const assetPrices = new Map<string, bigint>();
 let nativeBalance = 0n;
 const usd = (value: number) => `${value.toLocaleString(undefined, { maximumFractionDigits: 6 })}`;
 const portfolioTotalValue = document.querySelector<HTMLElement>("#portfolio-total-value")!;
+const portfolioTotalCard = document.querySelector<HTMLElement>("#portfolio-total-card")!;
+const portfolioTotalChart = document.querySelector<HTMLElement>("#portfolio-total-chart")!;
 const portfolioChangeValue = document.querySelector<HTMLElement>("#portfolio-24h-change")!;
 const portfolioChangeCard = document.querySelector<HTMLElement>("#portfolio-change-card")!;
+const portfolioChangeChart = document.querySelector<HTMLElement>("#portfolio-change-chart")!;
 const portfolioChangeNote = document.querySelector<HTMLElement>("#portfolio-change-note")!;
 const portfolioActiveRules = document.querySelector<HTMLElement>("#portfolio-active-rules")!;
 type PortfolioSnapshot = { at: number; value: number };
@@ -575,10 +637,11 @@ function preservePortfolioChangeAfterOwnSwap(changeBeforeSwap: number) {
 
 function updatePortfolioMetrics() {
   const total = portfolioValueUsd();
-  portfolioTotalValue.textContent = `${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDm`;
+  portfolioTotalValue.innerHTML = `${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="portfolio-total-unit">USDm</span>`;
   if (!account || total <= 0) {
     portfolioChangeValue.textContent = "--";
     portfolioChangeNote.textContent = "Connect a wallet to build price history";
+    setPortfolioChartState(0);
     return;
   }
 
@@ -598,10 +661,26 @@ function updatePortfolioMetrics() {
   const baseline = history[0]?.value || total;
   const change = baseline > 0 ? ((total - baseline) / baseline) * 100 : 0;
   portfolioChangeValue.textContent = `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`;
-  portfolioChangeCard.classList.toggle("positive", change >= 0);
-  portfolioChangeCard.classList.toggle("negative", change < 0);
+  setPortfolioChartState(change);
   const historyAge = Date.now() - (history[0]?.at ?? Date.now());
   portfolioChangeNote.textContent = historyAge >= 23.75 * 60 * 60 * 1000 ? "Value change over the last 24 hours" : "Value change since this wallet session started";
+}
+
+function setPortfolioChartState(change: number) {
+  const isPositive = change >= 0;
+  for (const card of [portfolioTotalCard, portfolioChangeCard]) {
+    card.classList.toggle("positive", isPositive);
+    card.classList.toggle("negative", !isPositive);
+  }
+  const intensity = Math.min(1, Math.max(.35, Math.abs(change) / 5));
+  portfolioTotalCard.style.setProperty("--pnl-intensity", intensity.toFixed(2));
+  portfolioChangeCard.style.setProperty("--pnl-intensity", intensity.toFixed(2));
+
+  for (const chart of [portfolioTotalChart, portfolioChangeChart]) {
+    chart.classList.remove("chart-refresh");
+    void chart.offsetWidth;
+    chart.classList.add("chart-refresh");
+  }
 }
 
 function flashCurrentPrice(direction: "up" | "down") {
@@ -614,16 +693,237 @@ function flashCurrentPrice(direction: "up" | "down") {
   }
 }
 
+type AssetPriceSnapshot = { at: number; price: number };
+const assetPriceHistoryKey = "take-profit-asset-price-history";
+
+function collectAssetPriceChanges() {
+  const changes = new Map<string, number>();
+  if (!account) return changes;
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(assetPriceHistoryKey) ?? "{}") as Record<string, Record<string, AssetPriceSnapshot[]>>;
+    const owner = account.toLowerCase();
+    const ownerHistory = saved[owner] ?? {};
+    const now = Date.now();
+
+    for (const pair of pairs) {
+      const price = number(assetPrices.get(pair.symbol) ?? 0n, 18);
+      if (!Number.isFinite(price) || price <= 0) continue;
+      const history = (Array.isArray(ownerHistory[pair.symbol]) ? ownerHistory[pair.symbol] : [])
+        .filter((snapshot) => Number.isFinite(snapshot.at) && Number.isFinite(snapshot.price) && snapshot.at > now - 24 * 60 * 60 * 1000);
+      const last = history.at(-1);
+      if (!last || now - last.at >= 5 * 60 * 1000) history.push({ at: now, price });
+      ownerHistory[pair.symbol] = history;
+      const baseline = history[0]?.price ?? price;
+      changes.set(pair.symbol, baseline > 0 ? ((price - baseline) / baseline) * 100 : 0);
+    }
+
+    saved[owner] = ownerHistory;
+    localStorage.setItem(assetPriceHistoryKey, JSON.stringify(saved));
+  } catch {
+    // Price history is visual-only; the table still works without local storage.
+  }
+  return changes;
+}
+
+function priceChangeMarkup(change: number | undefined, isTradeable: boolean) {
+  if (!isTradeable || change === undefined || Math.abs(change) < 0.005) {
+    return '<small class="asset-price-change neutral">0.00%</small>';
+  }
+  const isNegative = change < 0;
+  return `<small class="asset-price-change ${isNegative ? "negative" : "positive"}">${isNegative ? "↓" : "↑"} ${isNegative ? "" : "+"}${change.toFixed(2)}%</small>`;
+}
+
+const sparklinePaths = {
+  neutral: "M1 14 L85 14",
+  positive: "M1 19 8 13 15 20 23 15 30 17 38 8 46 16 53 11 60 14 68 6 76 12 85 5",
+  negative: "M1 5 8 11 15 6 23 13 30 8 38 16 46 8 53 15 60 11 68 20 76 13 85 19",
+} as const;
+
+function priceSparklineMarkup(change: number | undefined, isTradeable: boolean) {
+  const state = !isTradeable || change === undefined || Math.abs(change) < 0.005
+    ? "neutral"
+    : change < 0 ? "negative" : "positive";
+  return `<i class="asset-sparkline ${state}" aria-hidden="true"><svg viewBox="0 0 86 28" preserveAspectRatio="none"><path d="${sparklinePaths[state]}"/></svg></i>`;
+}
+
+const allAssetSymbols = ["MON", ...pairs.map((pair) => pair.symbol), "USDm"];
+type AssetSort = "none" | "value-desc" | "value-asc" | "change-desc" | "change-asc";
+let assetSort: AssetSort = "none";
+const hiddenAssetSymbols = new Set<string>();
+
 function renderAssetRows() {
-  const assets = [{ symbol: "MON", balance: nativeBalance, price: 0n, decimals: 18 }, ...pairs.map((pair) => ({ symbol: pair.symbol, balance: assetBalances.get(pair.symbol) ?? 0n, price: assetPrices.get(pair.symbol) ?? 0n, decimals: 18 })), { symbol: "USDm", balance: assetBalances.get("USDm") ?? 0n, price: parseUnits("1", 18), decimals: 6 }];
+  const priceChanges = collectAssetPriceChanges();
+  const assets = [{ symbol: "MON", balance: nativeBalance, price: 0n, decimals: 18 }, ...pairs.map((pair) => ({ symbol: pair.symbol, balance: assetBalances.get(pair.symbol) ?? 0n, price: assetPrices.get(pair.symbol) ?? 0n, decimals: 18 })), { symbol: "USDm", balance: assetBalances.get("USDm") ?? 0n, price: parseUnits("1", 18), decimals: 6 }]
+    .filter((asset) => !hiddenAssetSymbols.has(asset.symbol))
+    .map((asset) => {
+      const numericValue = asset.symbol === "MON" ? -1 : Number(formatUnits(asset.balance, asset.decimals)) * Number(formatUnits(asset.price, 18));
+      const numericChange = priceChanges.get(asset.symbol) ?? 0;
+      return { ...asset, numericValue, numericChange };
+    });
+  if (assetSort === "value-desc") assets.sort((a, b) => b.numericValue - a.numericValue);
+  else if (assetSort === "value-asc") assets.sort((a, b) => a.numericValue - b.numericValue);
+  else if (assetSort === "change-desc") assets.sort((a, b) => b.numericChange - a.numericChange);
+  else if (assetSort === "change-asc") assets.sort((a, b) => a.numericChange - b.numericChange);
   assetRows.innerHTML = assets.map((asset) => {
+    const isTradeable = pairs.some((pair) => pair.symbol === asset.symbol);
+    const change = priceChanges.get(asset.symbol);
     const price = asset.symbol === "MON" ? "Network token" : usd(Number(formatUnits(asset.price, 18)));
     const holding = `${display(asset.balance, asset.decimals)} ${asset.symbol}`;
-    const action = asset.symbol === "MON" || asset.symbol === "USDm" ? "-" : "Take Profit";
-    return `<div class="asset-row"><span class="asset-name"><i class="token-dot">${asset.symbol.slice(0, 1)}</i><b>${asset.symbol}</b></span><span>${price}</span><span>${holding}</span><span class="row-action">${action}</span></div>`;
+    const value = asset.symbol === "MON" ? "—" : usd(asset.numericValue);
+    const action = isTradeable ? `<button type="button" class="row-action" data-select-asset="${asset.symbol}">Take Profit</button>` : "";
+    return `<div class="asset-row" data-symbol="${asset.symbol}"><span class="asset-name"><i class="token-dot">${asset.symbol.slice(0, 1)}</i><span><b>${asset.symbol}</b><small>${asset.symbol === "USDm" ? "Monad Dollar" : asset.symbol}</small></span></span><span class="asset-price"><span><b>${price}</b>${priceChangeMarkup(change, isTradeable)}</span>${priceSparklineMarkup(change, isTradeable)}</span><span>${holding}</span><span class="asset-value">${value}</span><span class="row-action-cell">${action}</span></div>`;
   }).join("");
+  applyAssetFilter();
 }
+
+assetRows.addEventListener("click", (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-select-asset]");
+  if (!button) return;
+  const symbol = button.dataset.selectAsset!;
+  document.querySelector<HTMLElement>("[data-tab='take-profit']")?.click();
+  if (ruleAsset.value !== symbol) {
+    ruleAsset.value = symbol;
+    ruleAsset.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  window.requestAnimationFrame(() => document.querySelector<HTMLElement>(".rule-config")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+});
+
+const classicAssetSearch = document.querySelector<HTMLInputElement>("#asset-search");
+const v2AssetSearch = document.querySelector<HTMLInputElement>("#v2-asset-search");
+const v2AssetCount = document.querySelector<HTMLElement>("#v2-asset-count");
+function applyAssetFilter() {
+  const term = (isPortfolioV2Route ? v2AssetSearch?.value : classicAssetSearch?.value)?.trim().toLowerCase() ?? "";
+  const rows = [...assetRows.querySelectorAll<HTMLElement>(".asset-row")];
+  let visible = 0;
+  for (const row of rows) {
+    const match = !term || (row.dataset.symbol ?? "").toLowerCase().startsWith(term);
+    row.hidden = !match;
+    if (match) visible++;
+  }
+  if (v2AssetCount) v2AssetCount.textContent = `Showing ${visible} of ${rows.length} assets`;
+}
+classicAssetSearch?.addEventListener("input", applyAssetFilter);
+v2AssetSearch?.addEventListener("input", applyAssetFilter);
+
+function closeAssetPopovers(except?: HTMLElement) {
+  for (const popover of document.querySelectorAll<HTMLElement>(".asset-popover")) {
+    if (popover === except) continue;
+    popover.hidden = true;
+    popover.previousElementSibling?.setAttribute("aria-expanded", "false");
+  }
+}
+function toggleAssetPopover(button: HTMLButtonElement | null, popover: HTMLElement | null) {
+  if (!button || !popover) return;
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const willOpen = popover.hidden;
+    closeAssetPopovers(willOpen ? popover : undefined);
+    popover.hidden = !willOpen;
+    button.setAttribute("aria-expanded", String(willOpen));
+  });
+}
+document.addEventListener("click", () => closeAssetPopovers());
+
+const assetSortToggle = document.querySelector<HTMLButtonElement>("#asset-sort-toggle");
+const assetSortMenu = document.querySelector<HTMLElement>("#asset-sort-menu");
+toggleAssetPopover(assetSortToggle, assetSortMenu);
+assetSortMenu?.addEventListener("click", (event) => {
+  const target = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-sort]");
+  if (!target) return;
+  assetSort = target.dataset.sort as AssetSort;
+  for (const option of assetSortMenu.querySelectorAll("[data-sort]")) option.classList.toggle("active", option === target);
+  closeAssetPopovers();
+  renderAssetRows();
+});
+
+const assetVisibilityToggle = document.querySelector<HTMLButtonElement>("#asset-visibility-toggle");
+const assetVisibilityMenu = document.querySelector<HTMLElement>("#asset-visibility-menu");
+if (assetVisibilityMenu) {
+  assetVisibilityMenu.innerHTML = allAssetSymbols.map((symbol) => `<label><input type="checkbox" data-symbol="${symbol}" checked/>${symbol}</label>`).join("");
+  assetVisibilityMenu.addEventListener("change", (event) => {
+    const checkbox = event.target as HTMLInputElement;
+    const symbol = checkbox.dataset.symbol;
+    if (!symbol) return;
+    if (checkbox.checked) hiddenAssetSymbols.delete(symbol); else hiddenAssetSymbols.add(symbol);
+    renderAssetRows();
+  });
+}
+toggleAssetPopover(assetVisibilityToggle, assetVisibilityMenu);
+
+const rebalanceSymbols = ["JAMES", "EMO", "CHOG", "USDm"] as const;
+const rebalanceDefaults: Record<(typeof rebalanceSymbols)[number], number> = { JAMES: 40, EMO: 30, CHOG: 20, USDm: 10 };
+const rebalanceRows = document.querySelector<HTMLDivElement>("#rebalance-rows");
+const rebalanceTotal = document.querySelector<HTMLElement>("#rebalance-total");
+const rebalanceStatus = document.querySelector<HTMLElement>("#rebalance-status");
+
+function rebalanceTarget(symbol: (typeof rebalanceSymbols)[number]) {
+  const input = document.querySelector<HTMLInputElement>(`#rebalance-${symbol.toLowerCase()}`);
+  const value = Number(input?.value ?? 0);
+  return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+}
+
+function renderRebalancePlan() {
+  if (!rebalanceRows || !rebalanceTotal || !rebalanceStatus) return;
+
+  const targets = Object.fromEntries(rebalanceSymbols.map((symbol) => [symbol, rebalanceTarget(symbol)])) as Record<(typeof rebalanceSymbols)[number], number>;
+  const targetTotal = rebalanceSymbols.reduce((total, symbol) => total + targets[symbol], 0);
+  rebalanceTotal.textContent = `${targetTotal.toFixed(2).replace(/\.00$/, "")}%`;
+  rebalanceTotal.classList.toggle("invalid", Math.abs(targetTotal - 100) > 0.01);
+
+  if (!account) {
+    rebalanceRows.innerHTML = '<p class="empty-rebalance">Connect a wallet to load allocation data.</p>';
+    rebalanceStatus.textContent = "Connect a wallet to build a rebalance preview.";
+    return;
+  }
+
+  const values = Object.fromEntries(rebalanceSymbols.map((symbol) => {
+    const balance = assetBalances.get(symbol) ?? 0n;
+    const decimals = symbol === "USDm" ? 6 : 18;
+    const price = symbol === "USDm" ? 1 : number(assetPrices.get(symbol) ?? 0n, 18);
+    return [symbol, number(balance, decimals) * price];
+  })) as Record<(typeof rebalanceSymbols)[number], number>;
+  const total = rebalanceSymbols.reduce((sum, symbol) => sum + values[symbol], 0);
+
+  if (total <= 0) {
+    rebalanceRows.innerHTML = '<p class="empty-rebalance">Waiting for wallet balances and market prices.</p>';
+    rebalanceStatus.textContent = "Wallet connected. Refreshing portfolio allocation…";
+    return;
+  }
+
+  rebalanceRows.innerHTML = rebalanceSymbols.map((symbol) => {
+    const current = values[symbol] / total * 100;
+    const delta = targets[symbol] - current;
+    const action = Math.abs(delta) < 0.05 ? "Balanced" : delta > 0 ? `Buy ${delta.toFixed(2)}%` : `Sell ${Math.abs(delta).toFixed(2)}%`;
+    const actionClass = Math.abs(delta) < 0.05 ? "balanced" : delta > 0 ? "buy" : "sell";
+    return `<div class="rebalance-row"><span class="asset-name"><i class="token-dot">${symbol.slice(0, 1)}</i><b>${symbol}</b></span><span>${current.toFixed(2)}%</span><span>${targets[symbol].toFixed(2)}%</span><span class="rebalance-action ${actionClass}">${action}</span></div>`;
+  }).join("");
+  rebalanceStatus.textContent = Math.abs(targetTotal - 100) > 0.01
+    ? `Target allocation must equal 100%. ${targetTotal.toFixed(2)}% selected.`
+    : "Preview ready. Confirm individual trades separately when execution is enabled.";
+}
+
+for (const symbol of rebalanceSymbols) {
+  document.querySelector<HTMLInputElement>(`#rebalance-${symbol.toLowerCase()}`)?.addEventListener("input", renderRebalancePlan);
+}
+
+document.querySelector<HTMLButtonElement>("#reset-rebalance-targets")?.addEventListener("click", () => {
+  for (const symbol of rebalanceSymbols) {
+    const input = document.querySelector<HTMLInputElement>(`#rebalance-${symbol.toLowerCase()}`);
+    if (input) input.value = String(rebalanceDefaults[symbol]);
+  }
+  renderRebalancePlan();
+});
+
+document.querySelector<HTMLButtonElement>("#preview-rebalance")?.addEventListener("click", () => {
+  renderRebalancePlan();
+  if (rebalanceStatus && Math.abs(rebalanceSymbols.reduce((total, symbol) => total + rebalanceTarget(symbol), 0) - 100) <= 0.01) {
+    rebalanceStatus.textContent = "Rebalance preview updated. Review the suggested buys and sells before execution.";
+  }
+});
+
 renderAssetRows();
+renderRebalancePlan();
 
 for (const trigger of document.querySelectorAll<HTMLElement>("[data-tab]")) {
   trigger.addEventListener("click", () => {
@@ -664,13 +964,14 @@ const marketPair = () => pairs.find((pair) => pair.symbol === (marketSell.value 
 const marketDecimals = (symbol: string) => symbol === "USDm" ? 6 : 18;
 const marketBalance = (symbol: string) => assetBalances.get(symbol) ?? 0n;
 const formatMarketAmount = (amount: bigint, decimals: number) => formatUnits(amount, decimals);
+const displayMarketBalance = (amount: bigint, decimals: number) => Number(formatUnits(amount, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const ceilDiv = (value: bigint, divisor: bigint) => (value + divisor - 1n) / divisor;
 let marketQuoteRequest = 0;
 function renderMarketBalances() {
   const sellSymbol = marketSell.value;
   const buySymbol = marketBuy.value;
-  document.querySelector<HTMLElement>("#sell-balance")!.textContent = `${display(marketBalance(sellSymbol), marketDecimals(sellSymbol))} ${sellSymbol}`;
-  document.querySelector<HTMLElement>("#buy-balance")!.textContent = `${display(marketBalance(buySymbol), marketDecimals(buySymbol))} ${buySymbol}`;
+  document.querySelector<HTMLElement>("#sell-balance")!.textContent = `${displayMarketBalance(marketBalance(sellSymbol), marketDecimals(sellSymbol))} ${sellSymbol}`;
+  document.querySelector<HTMLElement>("#buy-balance")!.textContent = `${displayMarketBalance(marketBalance(buySymbol), marketDecimals(buySymbol))} ${buySymbol}`;
 }
 function marketAmountRaw(value: string, symbol: string) {
   try { return parseUnits(normalizeDecimal(value) || "0", marketDecimals(symbol)); } catch { return 0n; }
@@ -679,9 +980,12 @@ async function syncMarketTrade(source: "sell" | "buy" = "sell") {
   const requestId = ++marketQuoteRequest;
   const pair = marketPair();
   const direction = marketSell.value === "USDm" ? "buy" : "sell";
-  const legacyDirection = document.querySelector<HTMLSelectElement>(`#${pair.symbol}-direction`)!;
-  const legacyAmount = document.querySelector<HTMLInputElement>(`#${pair.symbol}-amount`)!;
-  legacyDirection.value = direction;
+  // The original per-pair controls are no longer rendered in the Portfolio
+  // layout. Keep these references optional so the new market card can work
+  // without the legacy DOM being present.
+  const legacyDirection = document.querySelector<HTMLSelectElement>(`#${pair.symbol}-direction`);
+  const legacyAmount = document.querySelector<HTMLInputElement>(`#${pair.symbol}-amount`);
+  if (legacyDirection) legacyDirection.value = direction;
   renderMarketBalances();
   const sellAmount = marketAmountRaw(marketAmount.value, marketSell.value);
   marketAmount.classList.toggle("invalid", sellAmount > marketBalance(marketSell.value));
@@ -708,10 +1012,10 @@ async function syncMarketTrade(source: "sell" | "buy" = "sell") {
       const required = ceilDiv(afterFee, 9_970n);
       if (requestId !== marketQuoteRequest) return;
       marketAmount.value = formatMarketAmount(required, marketDecimals(marketSell.value));
-      legacyAmount.value = marketAmount.value;
+      if (legacyAmount) legacyAmount.value = marketAmount.value;
       marketQuote.value = `Requires ${marketAmount.value} ${marketSell.value} for ${marketOutput.value} ${marketBuy.value}.`;
     } else {
-      legacyAmount.value = marketAmount.value;
+      if (legacyAmount) legacyAmount.value = marketAmount.value;
       const output = await client.readContract({ address: pair.pool, abi: poolArtifact.abi, functionName: "getAmountOut", args: [marketSell.value === "USDm" ? usdm : pair.token, sellAmount] }) as bigint;
       if (requestId !== marketQuoteRequest) return;
       marketOutput.value = formatMarketAmount(output, marketDecimals(marketBuy.value));
@@ -895,9 +1199,14 @@ const updateRuleSummary = (source: "growth" | "target" | "asset" | "amount" | "g
   summaryReturn.textContent = currentPrice ? `${profit >= 0 ? "+" : ""}${usd(profit)} USDm` : "--";
   summaryReturn.classList.toggle("negative", profit < 0);
   document.querySelector("#summary-sentence")!.textContent = targetPrice ? `${amountText} at ${usd(targetPrice)} USDm` : "--";
-  document.querySelector<HTMLInputElement>(`#${pair.symbol}-take`)!.value = String(targetPrice);
-  document.querySelector<HTMLInputElement>(`#${pair.symbol}-rebalance`)!.value = currentPrice ? String(currentPrice * 0.9) : "0";
-  document.querySelector<HTMLInputElement>(`#${pair.symbol}-share`)!.value = ruleShare.value;
+  // These fields belong to the retired per-asset configuration cards. They
+  // may still exist on older builds, but are intentionally absent from /app.
+  const legacyTake = document.querySelector<HTMLInputElement>(`#${pair.symbol}-take`);
+  const legacyRebalance = document.querySelector<HTMLInputElement>(`#${pair.symbol}-rebalance`);
+  const legacyShare = document.querySelector<HTMLInputElement>(`#${pair.symbol}-share`);
+  if (legacyTake) legacyTake.value = String(targetPrice);
+  if (legacyRebalance) legacyRebalance.value = currentPrice ? String(currentPrice * 0.9) : "0";
+  if (legacyShare) legacyShare.value = ruleShare.value;
   const createRule = document.querySelector<HTMLButtonElement>("#create-rule")!;
   createRule.disabled = !account || amount <= 0 || amount > number(balance, 18) || currentPrice <= 0 || targetPrice <= 0;
   createRule.textContent = "Create take-profit rule";
@@ -1247,6 +1556,7 @@ async function refreshOnchainAccountData() {
   assetBalances.set("USDm", stableBalance);
   for (const token of tokenData) { assetBalances.set(token.symbol, token.balance); assetPrices.set(token.symbol, token.price); }
   renderAssetRows();
+  renderRebalancePlan();
   renderMarketBalances();
   updatePortfolioMetrics();
   updateRuleSummary("asset");
@@ -1283,6 +1593,7 @@ function refreshLivePrices() {
         assetPrices.set(update.symbol, update.price);
       }
       renderAssetRows();
+      renderRebalancePlan();
       renderMarketBalances();
       updatePortfolioMetrics();
       updateRuleSummary("asset");
@@ -1312,8 +1623,9 @@ async function approveIfNeeded(token: Address, spender: Address, amount: bigint,
   await wait(await connectedWallet.writeContract({ ...approval, gas: gas + gas / 10n }));
 }
 async function refreshPolicy(pair: typeof pairs[number]) {
-  const info = document.querySelector<HTMLParagraphElement>(`#${pair.symbol}-policy`)!;
-  const execute = document.querySelector<HTMLButtonElement>(`#${pair.symbol}-execute`)!;
+  const info = document.querySelector<HTMLParagraphElement>(`#${pair.symbol}-policy`);
+  const execute = document.querySelector<HTMLButtonElement>(`#${pair.symbol}-execute`);
+  if (!info || !execute) return;
   try {
     const [price, takeProfit, rebalance, assetBalance, stableBalance] = await Promise.all([
       client.readContract({ address: pair.vault, abi: vaultArtifact.abi, functionName: "spotPriceE18" }),
@@ -1343,7 +1655,8 @@ function inputs(pair: typeof pairs[number]) {
   return { direction, amountIn: parseUnits(raw, decimalsIn), tokenIn, decimalsOut, symbolIn, symbolOut };
 }
 async function quote(pair: typeof pairs[number]) {
-  const quoteBox = document.querySelector<HTMLParagraphElement>(`#${pair.symbol}-quote`)!;
+  const quoteBox = document.querySelector<HTMLParagraphElement>(`#${pair.symbol}-quote`);
+  if (!quoteBox) return;
   try {
     const data = inputs(pair);
     if (data.amountIn <= 0n) throw new Error("Amount must be greater than zero.");
@@ -1354,8 +1667,12 @@ async function quote(pair: typeof pairs[number]) {
 }
 
 document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
+  const connectButton = document.querySelector<HTMLButtonElement>("#connect")!;
+  if (account) { openWalletDrawer(); return; }
+  connectButton.disabled = true;
+  const connectLabel = connectButton.textContent;
+  connectButton.textContent = "Connecting…";
   try {
-    if (account) { openWalletDrawer(); return; }
     if (!window.ethereum) throw new Error("Install MetaMask.");
     if (await window.ethereum.request({ method: "eth_chainId" }) !== "0x279f") {
       try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x279f" }] }); }
@@ -1368,11 +1685,19 @@ document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
     set("Loading wallet balances and live prices from Monad Testnet...");
     safeAccount = undefined;
     await refreshOnchainAccountData();
-    for (const pair of pairs) { document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-deploy`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-fund`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-keeper`)!.disabled = false; document.querySelector<HTMLButtonElement>(`#${pair.symbol}-ownership`)!.disabled = false; await quote(pair); await refreshPolicy(pair); }
+    for (const pair of pairs) {
+      for (const action of ["swap", "deploy", "fund", "keeper", "ownership"] as const) {
+        const legacyButton = document.querySelector<HTMLButtonElement>(`#${pair.symbol}-${action}`);
+        if (legacyButton) legacyButton.disabled = false;
+      }
+      await quote(pair);
+      await refreshPolicy(pair);
+    }
     const shortAccount = `${account.slice(0, 5)}...${account.slice(-4)}`;
     const connect = document.querySelector<HTMLButtonElement>("#connect")!;
     connect.classList.add("wallet-button");
     connect.innerHTML = `<span class="wallet-balance">${display(nativeBalance, 18)} MON</span><span>${shortAccount}</span><span class="wallet-avatar">${account.slice(2, 4).toUpperCase()}</span>`;
+    connect.disabled = false;
     marketSwap.disabled = false;
     marketSwap.textContent = "Swap";
     await syncMarketTrade();
@@ -1380,8 +1705,22 @@ document.querySelector<HTMLButtonElement>("#connect")!.onclick = async () => {
     await refreshTelegramLink();
     renderEoaAutomation();
     set("Connected. Your MetaMask balances and live prices are loaded. Deploy an executor once, then create a rule.");
-  } catch (error) { set(error instanceof Error ? error.message : "Connection failed."); }
+  } catch (error) {
+    set(error instanceof Error ? error.message : "Connection failed.");
+    connectButton.disabled = false;
+    connectButton.textContent = connectLabel;
+  }
 };
+
+void (async () => {
+  if (!window.ethereum) return;
+  try {
+    const authorizedAccounts = await window.ethereum.request({ method: "eth_accounts" }) as string[];
+    if (authorizedAccounts.length > 0) document.querySelector<HTMLButtonElement>("#connect")!.click();
+  } catch { /* The explicit Connect wallet action remains available. */ }
+  window.ethereum.on?.("accountsChanged", () => window.location.reload());
+  window.ethereum.on?.("chainChanged", () => window.location.reload());
+})();
 
 void refreshDemoFaucet();
 void refreshTelegramLink();
@@ -1389,8 +1728,13 @@ setInterval(() => { if (account) void refreshTelegramLink(); }, 10_000);
 setInterval(() => { if (account) void refreshLivePrices(); }, 10_000);
 
 for (const pair of pairs) {
-  document.querySelector<HTMLInputElement>(`#${pair.symbol}-amount`)!.oninput = () => { void quote(pair); };
-  document.querySelector<HTMLSelectElement>(`#${pair.symbol}-direction`)!.onchange = () => { void quote(pair); };
+  const legacyAmountInput = document.querySelector<HTMLInputElement>(`#${pair.symbol}-amount`);
+  const legacyDirectionInput = document.querySelector<HTMLSelectElement>(`#${pair.symbol}-direction`);
+  // The legacy panel is not included in the current Portfolio route. Avoid
+  // registering handlers for controls that do not exist.
+  if (!legacyAmountInput || !legacyDirectionInput) continue;
+  legacyAmountInput.oninput = () => { void quote(pair); };
+  legacyDirectionInput.onchange = () => { void quote(pair); };
   document.querySelector<HTMLButtonElement>(`#${pair.symbol}-swap`)!.onclick = async () => {
     try {
       const changeBeforeSwap = portfolioChangePercent();
