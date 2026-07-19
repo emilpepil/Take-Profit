@@ -1489,7 +1489,7 @@ let lastKnownRulesMarkup = "";
 // A policy becomes inactive as soon as the execution transaction is submitted.
 // Keep this neutral state until the keeper records its confirmed receipt.
 const finalizingRuleSince = new Map<string, number>();
-const finalizingWindowMs = 45_000;
+const finalizingWindowMs = 90_000;
 async function refreshExistingRulesNow() {
   if (!account) { existingRulesBody.innerHTML = `<p class="rule-empty">Connect MetaMask to load your wallet rules.</p>`; return; }
   await refreshKeeperHealth();
@@ -1541,7 +1541,12 @@ async function refreshExistingRulesNow() {
     const ruleKey = `${account!.toLowerCase()}:${rule.executor.toLowerCase()}:${rule.id}`;
     const canBeFinalizing = rule.state === "cancelled" && targetReached && heartbeatMatches && keeperHealth?.mode !== "dry-run";
     if (rule.state === "active" || rule.state === "completed" || !canBeFinalizing) finalizingRuleSince.delete(ruleKey);
-    if (canBeFinalizing && !finalizingRuleSince.has(ruleKey)) finalizingRuleSince.set(ruleKey, Date.now());
+    // While the RPC provider is known to be rate-limited, keep pushing the
+    // finalizing clock forward instead of letting it expire — a slow public
+    // testnet RPC (not an actual cancellation) should never flash "Cancelled"
+    // on a rule the keeper is genuinely about to confirm as completed.
+    const rpcCurrentlyLimited = keeperHealth?.providerStatus === "temporarily-limited";
+    if (canBeFinalizing && (!finalizingRuleSince.has(ruleKey) || rpcCurrentlyLimited)) finalizingRuleSince.set(ruleKey, Date.now());
     const finalizing = canBeFinalizing && Date.now() - (finalizingRuleSince.get(ruleKey) ?? 0) < finalizingWindowMs;
     if (rule.state === "unknown") {
       return `<div class="rule-row" data-rule-state="unknown"><span class="asset-name"><i class="token-dot">${rule.pair.symbol.slice(0, 1)}</i><b>${rule.pair.symbol} ${rule.version.toUpperCase()} #${rule.id}</b></span><span>Target ${usd(number(rule.target, 18))} USDm</span><span>Sell ${display(rule.amount, 18)} ${rule.pair.symbol}</span><span class="rule-state"><span class="rule-status legacy">Loading</span><small>Multi-rule ${rule.version.toUpperCase()} · Checking on-chain execution status</small></span><button class="cancel-rule" type="button" disabled>Loading</button></div>`;
