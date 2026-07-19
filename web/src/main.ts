@@ -1494,7 +1494,11 @@ async function refreshExistingRulesNow() {
     return;
   }
   existingRulesBody.innerHTML = rows.length ? rows.join("") : `<p class="rule-empty">No wallet rules yet. Create your first multi-level take-profit rule.</p>`;
-  const unregisteredV3 = v3Rules.find((rule) => rule.active && !monitoredKeeperRule("v3", rule.executor, account!));
+  // Only offer the recovery button when the keeper health API actually
+  // answered. When it's unreachable, monitoredKeeperRule() can never confirm
+  // a match, which would otherwise show this button for every already-
+  // registered rule just because we couldn't ask the VM.
+  const unregisteredV3 = keeperHealth ? v3Rules.find((rule) => rule.active && !monitoredKeeperRule("v3", rule.executor, account!)) : undefined;
   if (unregisteredV3) {
     existingRulesBody.insertAdjacentHTML("afterbegin", `<div class="rule-empty"><button class="primary-button" type="button" data-register-eoa-v3="${unregisteredV3.pair.symbol}">Connect ${unregisteredV3.pair.symbol} keeper</button><br/><small>This one-time signature lets the VM monitor and execute this wallet's V3 rules. It does not move tokens or change approvals.</small></div>`);
   }
