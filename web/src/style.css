@@ -11,7 +11,7 @@
 
 @media (min-width:901px){.app-shell{padding-left:240px}.sidebar{position:fixed;left:0;top:0;bottom:0;height:100vh;z-index:20;overflow-y:auto}.workspace{flex:1}}
 
-.sidebar-demo-guide{margin-top:32px;padding:15px;border:1px solid #2d3d20;border-radius:9px;background:linear-gradient(135deg,#171b13,#111111)}.sidebar-demo-guide h2{margin:0;font-size:15px}.sidebar-demo-guide>p:not(.eyebrow){margin:8px 0 13px;color:#aaa;font:500 11px/1.45 Geist,sans-serif}.sidebar-guide-button{width:100%;padding:8px 10px;font-size:11px}.demo-guide-backdrop{position:fixed;z-index:100;inset:0;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.74);backdrop-filter:blur(4px)}.demo-guide-backdrop[hidden]{display:none!important}.demo-guide-modal{width:min(590px,100%);max-height:min(760px,calc(100vh - 40px));overflow:auto;padding:22px;border:1px solid #343434;border-radius:12px;background:#1a1a1a;box-shadow:0 28px 90px rgba(0,0,0,.65)}.demo-guide-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid #303030}.demo-guide-heading h2{margin:0;font-size:21px;letter-spacing:-.03em}.demo-guide-intro{margin:16px 0;color:#b9b9b9;font:500 12px/1.5 Geist,sans-serif}.demo-guide-steps{display:grid;gap:12px;margin:0;padding:0;list-style:none}.demo-guide-steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:12px;border:1px solid #2c2c2c;border-radius:8px;background:#121212}.demo-guide-steps li>span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#263218;color:#c1ff00;font:700 11px Geist,sans-serif}.demo-guide-steps strong,.demo-guide-steps small{display:block}.demo-guide-steps strong{font-size:12px}.demo-guide-steps small{margin-top:4px;color:#a8a8a8;font:500 11px/1.45 Geist,sans-serif}.demo-faucet-link{display:inline-flex;margin-top:10px;padding:7px 11px;font-size:10px;text-decoration:none}@media (min-width:901px){.sidebar-demo-guide{position:fixed;left:12px;bottom:150px;width:216px;margin:0;z-index:10}}@media (max-width:900px){.sidebar-demo-guide{display:none}}@media (max-width:600px){.demo-guide-backdrop{padding:10px}.demo-guide-modal{max-height:calc(100vh - 20px);padding:16px}.demo-guide-heading h2{font-size:18px}}
+.sidebar-demo-guide{margin-top:32px;padding:15px;border:1px solid #2d3d20;border-radius:9px;background:linear-gradient(135deg,#171b13,#111111)}.sidebar-demo-guide h2{margin:0;font-size:15px}.sidebar-demo-guide>p:not(.eyebrow){margin:8px 0 13px;color:#aaa;font:500 11px/1.45 Geist,sans-serif}.sidebar-guide-button{width:100%;padding:8px 10px;font-size:11px}.demo-guide-backdrop{position:fixed;z-index:100;inset:0;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.74);backdrop-filter:blur(4px)}.demo-guide-backdrop[hidden]{display:none!important}.demo-guide-modal{width:min(590px,100%);max-height:min(760px,calc(100vh - 40px));overflow:auto;padding:22px;border:1px solid #343434;border-radius:12px;background:#1a1a1a;box-shadow:0 28px 90px rgba(0,0,0,.65)}.demo-guide-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid #303030}.demo-guide-heading h2{margin:0;font-size:21px;letter-spacing:-.03em}.demo-guide-intro{margin:16px 0;color:#b9b9b9;font:500 12px/1.5 Geist,sans-serif}.demo-guide-steps{display:grid;gap:12px;margin:0;padding:0;list-style:none}.demo-guide-steps li{display:grid;grid-template-columns:28px 1fr auto;gap:10px 14px;align-items:center;padding:12px;border:1px solid #2c2c2c;border-radius:8px;background:#121212}.demo-guide-steps li>span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#263218;color:#c1ff00;font:700 11px Geist,sans-serif}.demo-guide-steps strong,.demo-guide-steps small{display:block}.demo-guide-steps strong{font-size:12px}.demo-guide-steps small{margin-top:4px;color:#a8a8a8;font:500 11px/1.45 Geist,sans-serif}@media (min-width:901px){.sidebar-demo-guide{position:fixed;left:12px;bottom:150px;width:216px;margin:0;z-index:10}}@media (max-width:900px){.sidebar-demo-guide{display:none}}@media (max-width:600px){.demo-guide-backdrop{padding:10px}.demo-guide-modal{max-height:calc(100vh - 20px);padding:16px}.demo-guide-heading h2{font-size:18px}.demo-guide-steps li{grid-template-columns:28px 1fr;grid-template-areas:"num text" "action action"}.demo-guide-steps li>span{grid-area:num}.demo-guide-steps li>div{grid-area:text}.demo-guide-action{grid-area:action;margin-top:2px;width:100%}}
 
 .demo-faucet-panel{padding:16px;margin-bottom:16px}.demo-faucet-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px;border:1px solid #2c2c2c;border-radius:8px;background:#121212}.demo-faucet-actions strong,.demo-faucet-actions span{display:block}.demo-faucet-actions strong{font-size:12px}.demo-faucet-actions span{margin-top:4px;color:#a9c7ec;font:500 10px Geist,sans-serif}.demo-faucet-tools{display:flex;gap:10px;margin-top:10px}.faucet-owner-action{margin:0}.demo-faucet-status{margin:12px 0 0;color:#9ca3af;font:500 10px/1.45 Geist,sans-serif}.demo-faucet-status.ready{color:#c1ff00}.demo-faucet-status.error{color:#ff7373}@media(max-width:600px){.demo-faucet-actions{align-items:stretch;flex-direction:column}.demo-faucet-actions .primary-button,.demo-faucet-tools .ghost-button{width:100%}.demo-faucet-tools{flex-direction:column}}
 
@@ -370,3 +370,29 @@
 @media(min-width:901px){.brand-wordmark strong{font-size:30px}}
 @media(max-width:900px){.brand-wordmark{display:none}}
 @media(max-width:600px){.section-title{flex-wrap:wrap;row-gap:10px}}
+.demo-guide-action{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;white-space:nowrap;padding:7px 12px;border:1px solid #3a3a3a;border-radius:999px;background:transparent;color:#9ca3af;font:600 11px Inter,sans-serif;text-decoration:none;cursor:pointer;transition:border-color .15s,color .15s}
+.demo-guide-action:hover{border-color:#c1ff00;color:#c1ff00}
+
+/* "Look here" highlight used when jumping from the demo guide to a specific
+   block: its outline blinks green for 5s, then returns to normal. Purely
+   visual, self-removing via JS after the animation finishes. */
+.demo-highlight{position:relative;animation:demo-highlight-blink .625s ease-in-out 8}
+.demo-highlight::after{
+  content:"";
+  position:absolute;
+  inset:-3px;
+  z-index:30;
+  border-radius:inherit;
+  border:2px solid #baff00;
+  pointer-events:none;
+  animation:demo-highlight-ring .625s ease-in-out 8;
+}
+@keyframes demo-highlight-blink{
+  0%,100%{box-shadow:0 0 0 0 rgba(186,255,0,0)}
+  50%{box-shadow:0 0 26px 2px rgba(186,255,0,.55)}
+}
+@keyframes demo-highlight-ring{
+  0%,100%{opacity:0}
+  50%{opacity:1}
+}
+.rule-config,.market-panel{scroll-margin-top:10px}

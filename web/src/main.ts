@@ -87,6 +87,55 @@ openDemoGuide.addEventListener("click", showDemoGuide);
 closeDemoGuide.addEventListener("click", hideDemoGuide);
 demoGuideBackdrop.addEventListener("click", (event) => { if (event.target === demoGuideBackdrop) hideDemoGuide(); });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !demoGuideBackdrop.hidden) hideDemoGuide(); });
+function highlightDemoBlock(el: Element | null) {
+  if (!el) return;
+  el.classList.remove("demo-highlight");
+  void (el as HTMLElement).offsetWidth; // restart the animation if it's already running
+  el.classList.add("demo-highlight");
+  window.setTimeout(() => el.classList.remove("demo-highlight"), 5200);
+}
+document.querySelector<HTMLElement>(".demo-guide-steps")!.addEventListener("click", (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-demo-action]");
+  if (!button) return;
+  const action = button.dataset.demoAction;
+  hideDemoGuide();
+  if (action === "connect") {
+    document.querySelector<HTMLElement>("[data-tab='portfolio']")?.click();
+    document.querySelector<HTMLButtonElement>("#connect")?.click();
+    return;
+  }
+  if (action === "create-rule") {
+    document.querySelector<HTMLElement>("[data-tab='take-profit']")?.click();
+    const target = document.querySelector(".rule-config");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    highlightDemoBlock(target);
+    return;
+  }
+  if (action === "swap") {
+    document.querySelector<HTMLElement>("[data-tab='portfolio']")?.click();
+    const target = document.querySelector(".market-panel");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    highlightDemoBlock(target);
+    return;
+  }
+  if (action === "history") {
+    document.querySelector<HTMLElement>("[data-tab='take-profit']")?.click();
+    const target = document.querySelector(".execution-history");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    highlightDemoBlock(target);
+    return;
+  }
+  // "claim" and "telegram" scroll to the Demo Faucet card, then trigger the
+  // same real button used elsewhere in the app (no duplicated logic).
+  document.querySelector<HTMLElement>("[data-tab='portfolio']")?.click();
+  const faucetPanel = document.querySelector<HTMLElement>("#demo-faucet-panel");
+  faucetPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (action === "claim") highlightDemoBlock(faucetPanel);
+  window.setTimeout(() => {
+    if (action === "claim") demoFaucetButton.click();
+    if (action === "telegram") connectTelegramButton.click();
+  }, 400);
+});
 const display = (amount: bigint, decimals: number) => Number(formatUnits(amount, decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 });
 const safeAddressInput = document.querySelector<HTMLInputElement>("#safe-address")!;
 const safeStatus = document.querySelector<HTMLParagraphElement>("#safe-status")!;
