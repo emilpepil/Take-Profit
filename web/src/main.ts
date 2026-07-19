@@ -156,8 +156,9 @@ const demoFaucetUrl = import.meta.env.VITE_DEMO_FAUCET_URL ?? keeperHealthUrl.re
 const telegramLinkUrl = import.meta.env.VITE_TELEGRAM_LINK_URL ?? keeperHealthUrl.replace(/\/health$/, "/telegram");
 const demoFaucetButton = document.querySelector<HTMLButtonElement>("#claim-demo-faucet")!;
 const addDemoTokensButton = document.querySelector<HTMLButtonElement>("#add-demo-tokens")!;
-document.querySelector<HTMLElement>(".demo-faucet-tools")!.insertAdjacentHTML("beforeend", '<button id="connect-telegram" class="ghost-button" type="button" disabled>Telegram notification</button>');
+document.querySelector<HTMLElement>(".demo-faucet-tools")!.insertAdjacentHTML("beforeend", '<button id="connect-telegram" class="ghost-button" type="button" disabled>Telegram notification</button><button id="disconnect-telegram" class="ghost-button" type="button" hidden>Disconnect Telegram</button>');
 const connectTelegramButton = document.querySelector<HTMLButtonElement>("#connect-telegram")!;
+const disconnectTelegramButton = document.querySelector<HTMLButtonElement>("#disconnect-telegram")!;
 const telegramBell = document.querySelector<HTMLButtonElement>("#telegram-bell")!;
 const ruleSummaryTelegramButton = document.querySelector<HTMLButtonElement>("#rule-summary-telegram")!;
 const fundDemoFaucetButton = document.querySelector<HTMLButtonElement>("#fund-demo-faucet")!;
@@ -169,6 +170,10 @@ function faucetMessage(address: Address) {
 function telegramLinkMessage(address: Address) {
   const command = { action: "take-profit-telegram-link", chainId: 10143, address, issuedAt: Date.now() };
   return ["Take Profit - Connect Telegram notifications", "", "This signature does not move tokens or grant spending permission.", "It creates a one-time 10-minute code that links this wallet to the Take Profit Telegram bot.", "", JSON.stringify(command)].join("\n");
+}
+function telegramUnlinkMessage(address: Address) {
+  const command = { action: "take-profit-telegram-unlink", chainId: 10143, address, issuedAt: Date.now() };
+  return ["Take Profit - Disconnect Telegram notifications", "", "This signature does not move tokens or grant spending permission.", "It removes the Telegram link for this wallet so a different chat can be connected.", "", JSON.stringify(command)].join("\n");
 }
 function keeperRegistrationMessage(executor: Address, owner: Address) {
   const command = { action: "take-profit-keeper-register", chainId: 10143, version: "v3", executor, owner, issuedAt: Date.now() };
@@ -191,6 +196,7 @@ async function refreshTelegramLink() {
   telegramBell.disabled = !account;
   ruleSummaryTelegramButton.disabled = !account;
   telegramLinked = false;
+  disconnectTelegramButton.hidden = true;
   if (!account) { connectTelegramButton.textContent = "Telegram notification"; ruleSummaryTelegramButton.textContent = "Telegram notification"; return; }
   try {
     const response = await fetch(`${telegramLinkUrl}/status?address=${account}`, { signal: AbortSignal.timeout(5_000) });
@@ -200,11 +206,48 @@ async function refreshTelegramLink() {
     connectTelegramButton.textContent = "Telegram notification";
     telegramBell.setAttribute("aria-label", telegramLinked ? "Open Telegram notifications" : "Connect Telegram notifications");
     ruleSummaryTelegramButton.textContent = "Telegram notification";
+    disconnectTelegramButton.hidden = !telegramLinked;
+    disconnectTelegramButton.disabled = false;
   } catch {
     connectTelegramButton.textContent = "Telegram notification";
     ruleSummaryTelegramButton.textContent = "Telegram notification";
   }
 }
+let disconnectTelegramArmed = false;
+let disconnectTelegramArmedTimer: number | undefined;
+const disconnectTelegramDefaultLabel = "Disconnect Telegram";
+disconnectTelegramButton.addEventListener("click", async () => {
+  if (!account) return;
+  if (!disconnectTelegramArmed) {
+    disconnectTelegramArmed = true;
+    disconnectTelegramButton.textContent = "Click again to confirm";
+    window.clearTimeout(disconnectTelegramArmedTimer);
+    disconnectTelegramArmedTimer = window.setTimeout(() => {
+      disconnectTelegramArmed = false;
+      disconnectTelegramButton.textContent = disconnectTelegramDefaultLabel;
+    }, 4_000);
+    return;
+  }
+  disconnectTelegramArmed = false;
+  window.clearTimeout(disconnectTelegramArmedTimer);
+  try {
+    disconnectTelegramButton.disabled = true;
+    disconnectTelegramButton.textContent = "Disconnecting…";
+    const message = telegramUnlinkMessage(account);
+    const signature = await wallet().signMessage({ message });
+    const response = await fetch(`${telegramLinkUrl}/unlink`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message, signature }), signal: AbortSignal.timeout(15_000) });
+    const payload = await response.json() as { unlinked?: boolean; error?: string };
+    if (!response.ok) throw new Error(payload.error ?? "Could not disconnect Telegram.");
+    demoFaucetStatus.textContent = "Telegram disconnected. You can connect a new chat anytime.";
+    demoFaucetStatus.className = "demo-faucet-status ready";
+    await refreshTelegramLink();
+  } catch (error) {
+    demoFaucetStatus.textContent = error instanceof Error ? error.message : "Could not disconnect Telegram.";
+    demoFaucetStatus.className = "demo-faucet-status error";
+    disconnectTelegramButton.disabled = !account;
+    disconnectTelegramButton.textContent = disconnectTelegramDefaultLabel;
+  }
+});
 async function refreshDemoFaucet() {
   fundDemoFaucetButton.hidden = account?.toLowerCase() !== demoTokenOwner.toLowerCase();
   demoFaucetButton.disabled = !account;

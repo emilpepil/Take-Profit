@@ -58,6 +58,30 @@ export async function createTelegramLink({ message, signature }) {
   return { code, expiresAt, botUrl: `https://t.me/${botUsername}?start=${code}` };
 }
 
+export async function unlinkTelegram({ message, signature }) {
+  const command = commandFromMessage(message);
+  if (command.action !== "take-profit-telegram-unlink" || command.chainId !== chainId) throw new Error("Unexpected Telegram-unlink command.");
+  if (!Number.isInteger(command.issuedAt) || Math.abs(Date.now() - command.issuedAt) > signatureLifetimeMs) {
+    throw new Error("Telegram-unlink signature expired. Please try again.");
+  }
+  const address = getAddress(command.address);
+  const signer = await recoverMessageAddress({ message, signature });
+  if (signer.toLowerCase() !== address.toLowerCase()) throw new Error("Signature must belong to the connected wallet.");
+
+  const state = await loadState();
+  const walletKey = address.toLowerCase();
+  const existing = state.links?.[walletKey];
+  if (existing) {
+    delete state.links[walletKey];
+    await saveState(state);
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (token) {
+      try { await sendTelegramMessage(token, existing.chatId, "This wallet has been disconnected from Take Profit notifications. Reconnect anytime from the app."); } catch { /* best-effort notice only */ }
+    }
+  }
+  return { unlinked: Boolean(existing) };
+}
+
 export async function telegramLinkStatus(address) {
   const state = await loadState();
   discardExpiredPending(state);

@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { getAddress, recoverMessageAddress } from "viem";
 import { claimDemoFaucet, demoFaucetAllowedOrigins, demoFaucetStatus } from "./demo-faucet.mjs";
-import { createTelegramLink, pollTelegramLinkUpdates, telegramLinkStatus } from "./telegram-links.mjs";
+import { createTelegramLink, pollTelegramLinkUpdates, telegramLinkStatus, unlinkTelegram } from "./telegram-links.mjs";
 
 const port = Number(process.env.KEEPER_HEALTH_PORT ?? 8787);
 const healthPath = process.env.KEEPER_HEALTH_PATH ?? "keeper/health.json";
@@ -129,6 +129,18 @@ const server = createServer(async (request, response) => {
     } catch (error) {
       response.setHeader("Content-Type", "application/json; charset=utf-8");
       response.writeHead(400).end(JSON.stringify({ error: error instanceof Error ? error.message : "Could not create Telegram link." }));
+    }
+    return;
+  }
+  if (request.method === "POST" && request.url === "/telegram/unlink") {
+    try {
+      if (!origin || !allowedOrigins.has(origin)) throw new Error("An approved app origin is required.");
+      const payload = await unlinkTelegram(await readJsonBody(request));
+      response.setHeader("Content-Type", "application/json; charset=utf-8");
+      response.writeHead(200).end(JSON.stringify(payload));
+    } catch (error) {
+      response.setHeader("Content-Type", "application/json; charset=utf-8");
+      response.writeHead(400).end(JSON.stringify({ error: error instanceof Error ? error.message : "Could not disconnect Telegram." }));
     }
     return;
   }
