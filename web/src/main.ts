@@ -1449,7 +1449,7 @@ document.querySelector<HTMLButtonElement>("#create-rule")!.addEventListener("cli
 updateRuleSummary();
 
 const existingRulesBody = document.querySelector<HTMLDivElement>("#existing-rules-body")!;
-document.querySelector<HTMLElement>(".existing-rules")!.insertAdjacentHTML("afterend", '<section class="surface execution-history"><div class="section-title"><div><p class="eyebrow">Confirmed on Monad Testnet</p><h3>Execution history</h3><p>Completed levels and their confirmed settlement.</p></div></div><div class="history-head"><span>Time</span><span>Rule</span><span>Sold</span><span>Avg. price</span><span>Received</span><span>Transaction</span></div><div id="execution-history-body"></div></section>');
+document.querySelector<HTMLElement>(".existing-rules")!.insertAdjacentHTML("afterend", '<section class="surface execution-history"><div class="section-title"><div><h3>Execution history</h3><p>Completed levels and their confirmed settlement.</p></div></div><div class="history-head"><span>Time</span><span>Rule</span><span>Sold</span><span>Avg. price</span><span>Received</span><span>Transaction</span></div><div id="execution-history-body"></div></section>');
 const executionHistoryBody = document.querySelector<HTMLDivElement>("#execution-history-body")!;
 function renderExecutionHistory() {
   const history = (keeperHealth?.eoaRules ?? (keeperHealth?.eoaRule ? [keeperHealth.eoaRule] : []))
