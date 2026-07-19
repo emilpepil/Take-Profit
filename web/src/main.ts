@@ -197,9 +197,9 @@ async function refreshTelegramLink() {
     const payload = await response.json() as { linked?: boolean };
     if (!response.ok) throw new Error("Telegram link status is unavailable.");
     telegramLinked = Boolean(payload.linked);
-    connectTelegramButton.textContent = telegramLinked ? "Telegram connected" : "Telegram notification";
+    connectTelegramButton.textContent = "Telegram notification";
     telegramBell.setAttribute("aria-label", telegramLinked ? "Open Telegram notifications" : "Connect Telegram notifications");
-    ruleSummaryTelegramButton.textContent = telegramLinked ? "Telegram connected" : "Telegram notification";
+    ruleSummaryTelegramButton.textContent = "Telegram notification";
   } catch {
     connectTelegramButton.textContent = "Telegram notification";
     ruleSummaryTelegramButton.textContent = "Telegram notification";
