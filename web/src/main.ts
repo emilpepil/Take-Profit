@@ -1567,14 +1567,6 @@ async function refreshExistingRulesNow() {
     return;
   }
   existingRulesBody.innerHTML = rows.length ? rows.join("") : `<p class="rule-empty">No wallet rules yet. Create your first multi-level take-profit rule.</p>`;
-  // Only offer the recovery button when the keeper health API actually
-  // answered. When it's unreachable, monitoredKeeperRule() can never confirm
-  // a match, which would otherwise show this button for every already-
-  // registered rule just because we couldn't ask the VM.
-  const unregisteredV3 = keeperHealth ? v3Rules.find((rule) => rule.active && !monitoredKeeperRule("v3", rule.executor, account!)) : undefined;
-  if (unregisteredV3) {
-    existingRulesBody.insertAdjacentHTML("afterbegin", `<div class="rule-empty"><button class="primary-button" type="button" data-register-eoa-v3="${unregisteredV3.pair.symbol}">Connect ${unregisteredV3.pair.symbol} keeper</button><br/><small>This one-time signature lets the VM monitor and execute this wallet's V3 rules. It does not move tokens or change approvals.</small></div>`);
-  }
   if (rows.length) lastKnownRulesMarkup = existingRulesBody.innerHTML;
   applyRuleFilter();
 }
@@ -1586,24 +1578,6 @@ function refreshExistingRules() {
 document.querySelector<HTMLButtonElement>("#refresh-rules")!.addEventListener("click", () => { void refreshExistingRules(); });
 setInterval(() => { if (account) void refreshExistingRules(); }, 15_000);
 existingRulesBody.addEventListener("click", async (event) => {
-  const registerButton = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-register-eoa-v3]");
-  if (registerButton && account) {
-    try {
-      const pair = pairs.find((item) => item.symbol === registerButton.dataset.registerEoaV3)!;
-      const executor = eoaExecutorsV3[pair.symbol];
-      if (!executor) throw new Error("This V3 executor is not available in this browser.");
-      registerButton.disabled = true;
-      registerButton.textContent = "Confirm in MetaMask...";
-      await registerExecutorWithKeeper(executor, account);
-      set(`${pair.symbol} keeper connection saved. The VM will check this wallet's active V3 rules on its next cycle.`);
-      await refreshExistingRules();
-    } catch (error) {
-      set(error instanceof Error ? error.message : "Could not connect this executor to the keeper.");
-      registerButton.disabled = false;
-      registerButton.textContent = "Connect keeper";
-    }
-    return;
-  }
   const eoaV2Button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-cancel-eoa-v2-rule]");
   if (eoaV2Button && !eoaV2Button.disabled && account) {
     const pair = pairs.find((item) => item.symbol === eoaV2Button.dataset.cancelEoaV2Rule)!;
